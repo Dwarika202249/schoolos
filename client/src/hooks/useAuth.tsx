@@ -1,46 +1,65 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '../store';
+import { authStart, authSuccess, authFailure, logout as logoutAction, clearError } from '../store/slices/authSlice';
+import api from '../utils/api';
+import toast from 'react-hot-toast';
 
 interface AuthContextType {
-  isAuthenticated: boolean;
   user: any | null;
   school: any | null;
-  login: (data: any) => void;
+  token: string | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  error: string | null;
+  login: (credentials: any) => Promise<void>;
+  register: (data: any) => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<any | null>(null);
-  const [school, setSchool] = useState<any | null>(null);
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const auth = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch<AppDispatch>();
 
-  // Check for existing session (simplified)
-  useEffect(() => {
-    const savedToken = localStorage.getItem('accessToken');
-    if (savedToken) {
-      // In a real app, verify token or fetch profile
-      setIsAuthenticated(true);
-      setUser({ firstName: 'Admin', lastName: 'User', role: 'OWNER' });
+  const login = async (credentials: any) => {
+    dispatch(authStart());
+    try {
+      const response = await api.post('/auth/login', credentials);
+      const { user, accessToken, school } = response.data.data;
+      dispatch(authSuccess({ user, school, token: accessToken }));
+      toast.success('Welcome back!');
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Login failed';
+      dispatch(authFailure(message));
+      toast.error(message);
+      throw error;
     }
-  }, []);
+  };
 
-  const login = (data: any) => {
-    setIsAuthenticated(true);
-    setUser(data.user);
-    setSchool(data.school);
-    localStorage.setItem('accessToken', data.accessToken);
+  const register = async (data: any) => {
+    dispatch(authStart());
+    try {
+      const response = await api.post('/auth/register', data);
+      const { user, accessToken, school } = response.data.data;
+      dispatch(authSuccess({ user, school, token: accessToken }));
+      toast.success('School registered successfully!');
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Registration failed';
+      dispatch(authFailure(message));
+      toast.error(message);
+      throw error;
+    }
   };
 
   const logout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-    setSchool(null);
-    localStorage.removeItem('accessToken');
+    dispatch(logoutAction());
+    toast.success('Logged out');
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, school, login, logout }}>
+    <AuthContext.Provider value={{ ...auth, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -48,6 +67,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
   return context;
 };

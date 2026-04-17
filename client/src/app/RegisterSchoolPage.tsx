@@ -1,28 +1,55 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShieldCheck, ArrowRight, Building2, User, Mail, Lock, Globe } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
+import { useAuth } from '../hooks/useAuth';
 
 export const RegisterSchoolPage = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = React.useState(false);
+  const { register, loading } = useAuth();
+  
+  const [formData, setFormData] = useState({
+    name: '',
+    slug: '',
+    ownerEmail: '',
+    ownerPassword: '',
+    firstName: '',
+    lastName: '',
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      navigate('/');
-    }, 1500);
+    try {
+      // Map frontend fields to backend expected format
+      // Backend expects { name, slug, owner: { firstName, lastName, email, password } }
+      const payload = {
+        name: formData.name,
+        slug: formData.slug,
+        owner: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.ownerEmail,
+          password: formData.ownerPassword,
+        }
+      };
+      
+      await register(payload);
+      navigate('/dashboard');
+    } catch (error) {
+      // toast is already handled in useAuth
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   return (
     <div className="min-h-[calc(100vh-80px)] bg-slate-50 flex items-center justify-center p-4 py-16">
       <div className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-5 gap-8">
-
+        
         {/* Left Side: Info */}
         <div className="lg:col-span-2 space-y-8 py-4">
           <div>
@@ -62,19 +89,67 @@ export const RegisterSchoolPage = () => {
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-slate-900 border-l-4 border-primary pl-4">School Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input label="School Name" placeholder="e.g. Modern Academy" icon={<Building2 className="w-5 h-5" />} required />
-                <Input label="Short Code / Slug" placeholder="e.g. m-acad" required />
+                <Input 
+                  label="School Name" 
+                  name="name"
+                  placeholder="e.g. Modern Academy" 
+                  icon={<Building2 className="w-5 h-5" />} 
+                  value={formData.name}
+                  onChange={handleChange}
+                  required 
+                />
+                <Input 
+                  label="Short Code / Slug" 
+                  name="slug"
+                  placeholder="e.g. m-acad" 
+                  value={formData.slug}
+                  onChange={handleChange}
+                  required 
+                />
               </div>
             </div>
 
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-slate-900 border-l-4 border-primary pl-4">Owner Profile</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input label="First Name" placeholder="John" icon={<User className="w-5 h-5" />} required />
-                <Input label="Last Name" placeholder="Doe" required />
+                <Input 
+                  label="First Name" 
+                  name="firstName"
+                  placeholder="John" 
+                  icon={<User className="w-5 h-5" />} 
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required 
+                />
+                <Input 
+                  label="Last Name" 
+                  name="lastName"
+                  placeholder="Doe" 
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required 
+                />
               </div>
-              <Input label="Email Address" type="email" placeholder="admin@school.com" icon={<Mail className="w-5 h-5" />} required />
-              <Input label="Password" type="password" placeholder="••••••••" icon={<Lock className="w-5 h-5" />} required />
+              <Input 
+                label="Email Address" 
+                name="ownerEmail"
+                type="email" 
+                placeholder="admin@school.com" 
+                icon={<Mail className="w-5 h-5" />} 
+                value={formData.ownerEmail}
+                onChange={handleChange}
+                required 
+              />
+              <Input 
+                label="Password" 
+                name="ownerPassword"
+                type="password" 
+                placeholder="••••••••" 
+                icon={<Lock className="w-5 h-5" />} 
+                value={formData.ownerPassword}
+                onChange={handleChange}
+                required 
+              />
             </div>
 
             <div className="pt-4">

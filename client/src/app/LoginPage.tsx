@@ -1,22 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Building2, ArrowRight } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
+import { useAuth } from '../hooks/useAuth';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = React.useState(false);
+  const { login, loading } = useAuth();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    schoolSlug: '',
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    // Simulate Login
-    setTimeout(() => {
-      setLoading(false);
-      navigate('/');
-    }, 1200);
+    try {
+      await login(formData);
+      navigate('/dashboard');
+    } catch (error) {
+      // toast is already handled in useAuth
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   return (
@@ -31,23 +41,32 @@ export const LoginPage = () => {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <Input 
               label="School Short Code / Slug" 
+              name="schoolSlug"
               placeholder="e.g. dps-delhi" 
               icon={<Building2 className="w-5 h-5" />} 
+              value={formData.schoolSlug}
+              onChange={handleChange}
               required 
             />
             <Input 
               label="Email Address" 
+              name="email"
               type="email" 
               placeholder="admin@school.com" 
               icon={<Mail className="w-5 h-5" />} 
+              value={formData.email}
+              onChange={handleChange}
               required 
             />
             <div className="space-y-1">
               <Input 
                 label="Password" 
+                name="password"
                 type="password" 
                 placeholder="••••••••" 
                 icon={<Lock className="w-5 h-5" />} 
+                value={formData.password}
+                onChange={handleChange}
                 required 
               />
               <div className="text-right">

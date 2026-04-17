@@ -26,8 +26,12 @@ export class AuthService {
   }
 
   static async registerSchool(data: any) {
+    const slug = data.slug || data.schoolSlug;
+    const name = data.name || data.schoolName;
+    const ownerData = data.owner || data;
+
     // 1. Check if slug exists
-    const existingSchool = await School.findOne({ slug: data.schoolSlug });
+    const existingSchool = await School.findOne({ slug });
     if (existingSchool) {
       throw createError(400, ErrorCodes.DUPLICATE_ENTRY, 'School slug already exists');
     }
@@ -35,28 +39,27 @@ export class AuthService {
     // 2. Create School (temporarily setting ownerUserId to a dummy value)
     const dummyId = new User()._id;
     const school = new School({
-      name: data.schoolName,
-      slug: data.schoolSlug,
-      code: data.schoolSlug.toUpperCase().slice(0, 6), // Generate a default code
+      name,
+      slug,
+      code: slug.toUpperCase().slice(0, 6), // Generate a default code
       address: {
-        line1: data.city, // simplified for MVP
+        line1: data.addressLine1 || data.city, 
         city: data.city,
         state: data.state,
         pincode: data.pincode,
       },
       phone: data.schoolPhone || data.phone,
-      email: data.schoolEmail,
-      boardAffiliation: data.boardAffiliation,
+      email: data.schoolEmail || ownerData.email,
       ownerUserId: dummyId,
     });
 
     // 3. Create Owner User
     const owner = new User({
       schoolId: school._id,
-      email: data.ownerEmail,
-      passwordHash: data.ownerPassword,
-      firstName: data.ownerFirstName,
-      lastName: data.ownerLastName,
+      email: ownerData.email || data.ownerEmail,
+      passwordHash: ownerData.password || data.ownerPassword,
+      firstName: ownerData.firstName || data.ownerFirstName,
+      lastName: ownerData.lastName || data.ownerLastName,
       role: 'OWNER',
     });
 

@@ -15,6 +15,8 @@ import { Dashboard } from './app/Dashboard';
 import { StudentManagement } from './app/StudentManagement';
 import { StudentEnrollment } from './app/StudentEnrollment';
 import { AcademicConfig } from './app/AcademicConfig';
+import { StaffManagement } from './app/StaffManagement';
+import { StaffAdd } from './app/StaffAdd';
 
 function App() {
   return (
@@ -48,6 +50,18 @@ function App() {
           <Route path="/academic" element={
             <AuthGuard>
               <MainLayout><AcademicConfig /></MainLayout>
+            </AuthGuard>
+          } />
+
+          <Route path="/staff" element={
+            <AuthGuard>
+              <MainLayout><StaffManagement /></MainLayout>
+            </AuthGuard>
+          } />
+          
+          <Route path="/staff/add" element={
+            <AuthGuard>
+              <MainLayout><StaffAdd /></MainLayout>
             </AuthGuard>
           } />
 

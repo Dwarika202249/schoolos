@@ -1,14 +1,13 @@
 import { Router } from 'express';
 import { StudentController } from '../controllers/student.controller';
-import { tenantContextMiddleware } from '../middleware/tenantContext.middleware';
+import { requireAdmin, requireTeacher } from '../middleware/rbac.middleware';
 
 const router = Router();
 
-router.use(tenantContextMiddleware);
-
-router.post('/enroll', StudentController.enroll);
-router.get('/', StudentController.list);
-router.get('/:id', StudentController.getById);
-router.put('/:id', StudentController.update);
+// Docs RBAC: POST = OWNER/ADMIN, GET = OWNER/ADMIN/TEACHER
+router.post('/enroll', requireAdmin, StudentController.enroll);
+router.get('/', requireTeacher, StudentController.list);
+router.get('/:id', requireTeacher, StudentController.getById);
+router.patch('/:id', requireAdmin, StudentController.update);
 
 export default router;

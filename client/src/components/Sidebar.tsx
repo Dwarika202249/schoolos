@@ -1,10 +1,10 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Settings, 
-  BookOpen, 
+import {
+  LayoutDashboard,
+  Users,
+  Settings,
+  BookOpen,
   CreditCard,
   Building2,
   CalendarDays,
@@ -15,8 +15,9 @@ import {
 import { useAuth } from '../hooks/useAuth';
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Students', href: '/students', icon: Users },
+  { name: 'Staff', href: '/staff', icon: Users },
   { name: 'Academic', href: '/academic', icon: BookOpen },
   { name: 'Finance', href: '/finance', icon: CreditCard },
   { name: 'Branches', href: '/branches', icon: Building2 },
@@ -39,7 +40,7 @@ export const Sidebar = () => {
 
       {/* Backdrop */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
           onClick={() => setIsOpen(false)}
         />
@@ -68,8 +69,8 @@ export const Sidebar = () => {
                 to={item.href}
                 className={({ isActive }) => `
                   flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
-                  ${isActive 
-                    ? 'bg-primary text-white shadow-lg shadow-primary/25' 
+                  ${isActive
+                    ? 'bg-primary text-white shadow-lg shadow-primary/25'
                     : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
                 `}
                 onClick={() => setIsOpen(false)}
@@ -79,6 +80,14 @@ export const Sidebar = () => {
               </NavLink>
             ))}
           </nav>
+
+          <button
+            onClick={() => logout()}
+            className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-rose-500/10 hover:text-rose-500 rounded-xl transition-all duration-200 group"
+          >
+            <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            <span className="font-semibold text-sm">Logout</span>
+          </button>
 
           {/* User profile footer */}
           <div className="p-4 bg-slate-800/50 mt-auto space-y-2">
@@ -92,14 +101,8 @@ export const Sidebar = () => {
                 <p className="text-xs text-slate-400 truncate">{school?.name || 'School OS'}</p>
               </div>
             </div>
-            
-            <button 
-              onClick={() => logout()}
-              className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-rose-500/10 hover:text-rose-500 rounded-xl transition-all duration-200 group"
-            >
-              <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              <span className="font-semibold text-sm">Logout</span>
-            </button>
+
+
           </div>
         </div>
       </div>

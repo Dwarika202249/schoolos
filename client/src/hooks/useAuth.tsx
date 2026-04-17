@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, ReactNode } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { authStart, authSuccess, authFailure, logout as logoutAction, clearError } from '../store/slices/authSlice';
@@ -23,6 +23,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const auth = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch<AppDispatch>();
 
+  /**
+   * On mount: if we have a token, rehydrate user/school from /auth/me.
+   * This handles page refresh and stale localStorage data.
+   */
+  useEffect(() => {
+    const rehydrate = async () => {
+      if (auth.token && auth.isAuthenticated) {
+        try {
+          const response = await api.get('/auth/me');
+          const { user, school } = response.data.data;
+          dispatch(authSuccess({ user, school, token: auth.token as string }));
+        } catch {
+          // Token invalid/expired, refresh interceptor will handle or logout
+        }
+      }
+    };
+    rehydrate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const login = async (credentials: any) => {
     dispatch(authStart());
     try {
@@ -31,7 +51,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       dispatch(authSuccess({ user, school, token: accessToken }));
       toast.success('Welcome back!');
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Login failed';
+      // Error response shape from docs: { success: false, error: { code, message } }
+      const message = error.response?.data?.error?.message 
+        || error.response?.data?.message 
+        || 'Login failed';
       dispatch(authFailure(message));
       toast.error(message);
       throw error;
@@ -46,14 +69,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       dispatch(authSuccess({ user, school, token: accessToken }));
       toast.success('School registered successfully!');
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Registration failed';
+      const message = error.response?.data?.error?.message 
+        || error.response?.data?.message 
+        || 'Registration failed';
       dispatch(authFailure(message));
       toast.error(message);
       throw error;
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      // Call server to clear refresh token cookie
+      await api.post('/auth/logout');
+    } catch {
+      // Best effort — clear local state regardless
+    }
     dispatch(logoutAction());
     toast.success('Logged out');
   };

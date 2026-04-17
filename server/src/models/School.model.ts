@@ -25,6 +25,7 @@ export interface ISchool extends Document {
     line1: string;
     line2?: string;
     city: string;
+    district?: string;
     state: string;
     pincode: string;
     country: string;
@@ -68,10 +69,11 @@ const schoolSchema = new Schema<ISchool>(
     address: {
       line1: { type: String },
       line2: String,
-      city: { type: String },
-      state: { type: String },
-      pincode: { type: String, match: [/^\d{6}$/, 'Please enter a valid 6-digit pincode'] },
-      country: { type: String, default: 'India' },
+      city: String,
+      district: String,
+      state: String,
+      pincode: { type: String, match: [/^\d{6}$/, "Please enter a valid 6-digit pincode"] },
+      country: { type: String, default: "India" },
     },
     phone: { type: String, match: [/^\+?[0-9]{10,15}$/, 'Please enter a valid phone number'] },
     email: { type: String, required: true, lowercase: true, match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please enter a valid email'] },

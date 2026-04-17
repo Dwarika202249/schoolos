@@ -24,6 +24,7 @@ import { AcademicConfig } from './app/AcademicConfig';
 import { StaffManagement } from './app/StaffManagement';
 import { StaffAdd } from './app/StaffAdd';
 import { SettingsPage } from './app/SettingsPage';
+import { BranchesPage } from './app/BranchesPage';
 
 function App() {
   return (
@@ -78,10 +79,15 @@ function App() {
             </AuthGuard>
           } />
 
-          {/* Settings - A-Z Working Feature */}
           <Route path="/settings" element={
             <AuthGuard>
               <MainLayout><SettingsPage /></MainLayout>
+            </AuthGuard>
+          } />
+
+          <Route path="/branches" element={
+            <AuthGuard>
+              <MainLayout><BranchesPage /></MainLayout>
             </AuthGuard>
           } />
 
@@ -89,12 +95,6 @@ function App() {
           <Route path="/finance" element={
             <AuthGuard>
               <MainLayout><div className="p-8 text-center text-slate-500 font-medium">Finance Management Page (Coming Soon)</div></MainLayout>
-            </AuthGuard>
-          } />
-          
-          <Route path="/branches" element={
-            <AuthGuard>
-              <MainLayout><div className="p-8 text-center text-slate-500 font-medium">Branch Management Page (Coming Soon)</div></MainLayout>
             </AuthGuard>
           } />
 

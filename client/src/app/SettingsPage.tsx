@@ -23,6 +23,7 @@ export const SettingsPage = () => {
     address: {
       line1: '',
       city: '',
+      district: '',
       state: '',
       pincode: ''
     },
@@ -47,6 +48,7 @@ export const SettingsPage = () => {
         address: {
           line1: school.address?.line1 || '',
           city: school.address?.city || '',
+          district: school.address?.district || '',
           state: school.address?.state || '',
           pincode: school.address?.pincode || ''
         },
@@ -190,32 +192,70 @@ export const SettingsPage = () => {
 
           {/* Contact Tab */}
           {activeTab === 'contact' && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 bg-card border border-white/5 p-8 rounded-[2rem]">
-               <h3 className="text-lg font-bold flex items-center gap-2">
-                 <Globe className="w-5 h-5 text-primary" /> Communication
-               </h3>
-               <div className="grid md:grid-cols-2 gap-4">
-                  <Input 
-                    label="Official Phone" 
-                    icon={<Phone className="w-4 h-4" />}
-                    value={formData.phone} 
-                    onChange={e => setFormData({...formData, phone: e.target.value})} 
-                  />
-                  <Input 
-                    label="Support Email" 
-                    icon={<Mail className="w-4 h-4" />}
-                    value={formData.email} 
-                    onChange={e => setFormData({...formData, email: e.target.value})} 
-                  />
-                  <div className="md:col-span-2">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 flex flex-col">
+              <div className="bg-card border border-white/5 p-8 rounded-[2rem] space-y-6">
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-primary" /> Communication
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
                     <Input 
-                      label="School Address" 
-                      icon={<MapPin className="w-4 h-4" />}
-                      value={formData.address.line1} 
-                      onChange={e => setFormData({...formData, address: {...formData.address, line1: e.target.value}})} 
+                      label="Official Phone" 
+                      icon={<Phone className="w-4 h-4" />}
+                      value={formData.phone} 
+                      onChange={e => setFormData({...formData, phone: e.target.value})} 
                     />
-                  </div>
-               </div>
+                    <Input 
+                      label="Support Email" 
+                      icon={<Mail className="w-4 h-4" />}
+                      value={formData.email} 
+                      onChange={e => setFormData({...formData, email: e.target.value})} 
+                    />
+                    <div className="md:col-span-2">
+                      <Input 
+                        label="Website" 
+                        icon={<Globe className="w-4 h-4" />}
+                        value={formData.website} 
+                        onChange={e => setFormData({...formData, website: e.target.value})} 
+                      />
+                    </div>
+                </div>
+              </div>
+
+              <div className="bg-card border border-white/5 p-8 rounded-[2rem] space-y-6 mt-6">
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-primary" /> Location Detail
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <Input 
+                        label="Address Line 1" 
+                        placeholder="Building, Street, Area"
+                        value={formData.address.line1} 
+                        onChange={e => setFormData({...formData, address: {...formData.address, line1: e.target.value}})} 
+                      />
+                    </div>
+                    <Input 
+                      label="City / Town" 
+                      value={formData.address.city} 
+                      onChange={e => setFormData({...formData, address: {...formData.address, city: e.target.value}})} 
+                    />
+                     <Input 
+                      label="District" 
+                      value={formData.address.district} 
+                      onChange={e => setFormData({...formData, address: {...formData.address, district: e.target.value}})} 
+                    />
+                    <Input 
+                      label="State" 
+                      value={formData.address.state} 
+                      onChange={e => setFormData({...formData, address: {...formData.address, state: e.target.value}})} 
+                    />
+                     <Input 
+                      label="Pincode" 
+                      value={formData.address.pincode} 
+                      onChange={e => setFormData({...formData, address: {...formData.address, pincode: e.target.value}})} 
+                    />
+                </div>
+              </div>
             </motion.div>
           )}
         </form>
@@ -231,7 +271,7 @@ export const SettingsPage = () => {
                 </li>
                 <li className="flex gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1 shrink-0" />
-                  Branding colors set here affect all branch dashboards.
+                  Updating your primary address here will automatically sync with your **Headquarters** campus in the Branches dashboard.
                 </li>
               </ul>
            </div>

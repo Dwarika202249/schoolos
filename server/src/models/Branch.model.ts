@@ -8,6 +8,7 @@ export interface IBranch extends Document {
   address: {
     line1: string;
     city: string;
+    district?: string;
     state: string;
     pincode: string;
   };
@@ -31,6 +32,7 @@ const branchSchema = new Schema<IBranch>(
     address: {
       line1: { type: String, required: true },
       city: { type: String, required: true },
+      district: String,
       state: { type: String, required: true },
       pincode: { type: String, required: true },
     },

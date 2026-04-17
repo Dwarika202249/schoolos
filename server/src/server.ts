@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { errorHandler } from './middleware/errorHandler.middleware';
 import authRoutes from './routes/auth.routes';
+import configRoutes from './routes/config.routes';
+import studentRoutes from './routes/student.routes';
 
 // Load environment variables
 dotenv.config();
@@ -23,6 +25,8 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/config', configRoutes);
+app.use('/api/v1/students', studentRoutes);
 
 // Error Handler
 app.use(errorHandler);

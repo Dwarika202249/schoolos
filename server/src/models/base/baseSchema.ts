@@ -1,9 +1,9 @@
-import { Schema, SchemaOptions } from 'mongoose';
+import { Schema, SchemaOptions, SchemaDefinition } from 'mongoose';
 
 /**
  * Reusable base fields applied to all tenant-scoped models.
  */
-export const baseFields = {
+export const baseFields: SchemaDefinition = {
   schoolId: {
     type: Schema.Types.ObjectId,
     ref: 'School',

@@ -1,143 +1,206 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { 
-  CheckCircle2, 
-  ArrowRight, 
-  Users, 
-  ShieldCheck, 
-  Zap, 
-  LayoutDashboard,
-  Building2,
-  TrendingUp,
-  Fingerprint
-} from 'lucide-react';
+import { ShieldCheck, Rocket, LayoutDashboard, Fingerprint, CalendarDays, Wallet, ArrowRight, BookOpen } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import { Footer } from '../components/Footer';
+import { Navbar } from '../components/Navbar';
+
+// Animation variants
+const fadeInUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2
+    }
+  }
+};
 
 export const LandingPage = () => {
   return (
-    <div className="bg-white overflow-hidden">
+    <div className="min-h-screen bg-background overflow-hidden selection:bg-primary/30">
+      <Navbar />
+      {/* Decorative Gradients */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-primary/20 blur-[120px] rounded-full pointer-events-none opacity-50 border-none" />
+      
       {/* Hero Section */}
-      <section className="relative pt-20 pb-32 overflow-hidden bg-slate-50">
-        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary text-sm font-bold mb-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <Zap className="w-4 h-4 fill-primary" />
-              <span>Next-Gen School ERP for Indian K-12</span>
-            </div>
-            <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tight leading-[1.1] mb-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              The OS that makes your <span className="text-primary italic">School Intelligent.</span>
-            </h1>
-            <p className="text-xl text-slate-600 mb-10 leading-relaxed animate-in fade-in slide-in-from-bottom-6 duration-1000">
-              Unify fee collection, attendance, academics, and payroll into a single, agentic system. Built for speed, security, and multiple campuses.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
-              <Link to="/register" className="w-full sm:w-auto">
-                <Button size="lg" className="w-full sm:w-auto px-10 h-16 text-lg tracking-wide group">
-                  Start Your 12-Month Pilot 
-                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Link to="/login" className="w-full sm:w-auto">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto px-10 h-16 text-xl">
-                  Sign In
-                </Button>
-              </Link>
-            </div>
-            
-            <div className="mt-16 flex items-center justify-center gap-8 text-slate-400 grayscale opacity-60">
-              <Building2 className="w-8 h-8" />
-              <div className="h-4 w-px bg-slate-200" />
-              <span className="font-bold text-lg uppercase tracking-widest">Multi-Branch Ready</span>
-              <div className="h-4 w-px bg-slate-200" />
-              <ShieldCheck className="w-8 h-8" />
-            </div>
-          </div>
-        </div>
+      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex flex-col items-center text-center">
+        <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="relative z-10 w-full max-w-4xl mx-auto">
+          
+          <motion.div variants={fadeInUp} className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary font-medium text-sm">
+            <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse" />
+            Introducing the Next Generation of School Management
+          </motion.div>
+
+          <motion.h1 variants={fadeInUp} className="text-5xl md:text-7xl font-black text-foreground tracking-tighter leading-[1.1] mb-8">
+            Run your entire school.<br/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">Instantly.</span>
+          </motion.h1>
+
+          <motion.p variants={fadeInUp} className="text-lg md:text-xl text-slate-400 font-medium max-w-2xl mx-auto mb-12">
+            No more scattered spreadsheets or clunky legacy software. School OS unites your attendance, staff, students, and finances under one beautiful, lightning-fast roof.
+          </motion.p>
+
+          <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link to="/register" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full text-lg px-8 py-6 rounded-2xl shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
+                Start Your School <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+            <Link to="/login" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full text-lg px-8 py-6 rounded-2xl border-white/10 hover:bg-white/5 bg-transparent text-foreground">
+                Sign into Dashboard
+              </Button>
+            </Link>
+          </motion.div>
+        </motion.div>
+
+        {/* Hero Visual Mockup */}
+        <motion.div 
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.4 }}
+          className="mt-20 relative w-full max-w-5xl rounded-3xl overflow-hidden glassmorphism shadow-2xl border border-white/10 bg-card/60 backdrop-blur-xl p-4 md:p-8"
+        >
+          <img src="/auth-bg.png" alt="Dashboard Preview" className="w-full h-[400px] sm:h-[600px] object-cover rounded-2xl opacity-80" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        </motion.div>
       </section>
 
-      {/* Features Grid */}
-      <section id="features" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">Built for modern administrators.</h2>
-            <p className="text-lg text-slate-500">Stop fighting your software. Start leading your school.</p>
-          </div>
+      {/* Bento Grid Features Section */}
+      <section id="features" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative relative z-10">
+        <div className="mb-16">
+          <h2 className="text-4xl md:text-5xl font-black text-foreground tracking-tight mb-4">Everything you need.<br/>Nothing you don't.</h2>
+          <p className="text-slate-400 text-lg">We designed School OS for humans. It takes minutes to learn and seconds to use.</p>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                title: 'Fee Intelligence',
-                desc: 'Real-time defaulter tracking, automatic ledger generation, and 30-second fee collection flow.',
-                icon: TrendingUp
-              },
-              {
-                title: 'Tenant Isolation',
-                desc: 'Every school belongs to its own hard-walled data secure layer. Your data never mixes.',
-                icon: ShieldCheck
-              },
-              {
-                title: 'Mobile-First PWA',
-                desc: 'Works flawlessly on any phone, tablet or desktop. No app store installation required.',
-                icon: LayoutDashboard
-              },
-              {
-                title: 'AI-Ready Schema',
-                desc: 'Exportable JSON/CSV data ready to power your school’s own RAG and AI-insight pipelines.',
-                icon: Zap
-              },
-              {
-                title: 'Role-Aware Dashboards',
-                desc: 'Tailored experiences for Owners, Admins, Teachers, Parents and Students.',
-                icon: Users
-              },
-              {
-                title: 'Academic Perfection',
-                desc: 'Flexible class-section logic, subject masters, and rapid attendance marking.',
-                icon: CheckCircle2
-              }
-            ].map((f, i) => (
-              <div key={i} className="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all group">
-                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-primary shadow-sm group-hover:bg-primary group-hover:text-white transition-colors mb-6">
-                  <f.icon className="w-7 h-7" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">{f.title}</h3>
-                <p className="text-slate-600 leading-relaxed">{f.desc}</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Main Feature */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="md:col-span-2 rounded-3xl bg-card border border-white/5 p-8 flex flex-col justify-between overflow-hidden relative group"
+          >
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 blur-[80px] rounded-full group-hover:bg-primary/30 transition-all duration-700" />
+            <div className="mb-16">
+              <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center mb-6">
+                <UsersIcon className="w-6 h-6 text-primary" />
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Trust Quote */}
-      <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-repeat" />
-        </div>
-        <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
-          <p className="text-3xl md:text-4xl font-medium leading-tight mb-8">
-            "School OS is the first ERP that actually understands the administrative chaos of Indian schools. It turned our 3-day fee closing cycle into a 30-minute task."
-          </p>
-          <div className="flex items-center justify-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center font-bold text-primary">DS</div>
-            <div className="text-left">
-              <p className="font-bold text-lg">Dr. Sameer Gupta</p>
-              <p className="text-slate-400">Director, Delhi International School</p>
+              <h3 className="text-2xl font-bold text-foreground mb-2">Multi-Branch Ecosystem</h3>
+              <p className="text-slate-400">Manage 1 or 1,000 campuses from a single pane of glass. Data is strictly hardware-isolated but globally visible to the owner.</p>
             </div>
+          </motion.div>
+
+          {/* Secondary Feature */}
+          <motion.div whileHover={{ y: -5 }} className="rounded-3xl bg-card border border-white/5 p-8 relative flex flex-col justify-between">
+            <div>
+              <div className="w-12 h-12 rounded-2xl bg-green-500/20 flex items-center justify-center mb-6">
+                <Wallet className="w-6 h-6 text-green-500" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground mb-2">Frictionless Finance</h3>
+              <p className="text-slate-400">Generate fee invoices, track pending dues, and view daily revenue instantly.</p>
+            </div>
+          </motion.div>
+
+          {/* Feature 3 */}
+          <motion.div whileHover={{ y: -5 }} className="rounded-3xl bg-card border border-white/5 p-8 relative">
+            <div className="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center mb-6">
+              <CalendarDays className="w-6 h-6 text-purple-500" />
+            </div>
+            <h3 className="text-xl font-bold text-foreground mb-2">Smart Attendance</h3>
+            <p className="text-slate-400 text-sm">Teachers log daily presence with one tap. Parents get notified instantly if a student is missing.</p>
+          </motion.div>
+
+          {/* Feature 4 */}
+          <motion.div whileHover={{ y: -5 }} className="rounded-3xl bg-card border border-white/5 p-8 relative md:col-span-2 overflow-hidden group">
+             <div className="absolute -bottom-24 -right-24 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-700">
+               <ShieldCheck className="w-96 h-96" />
+             </div>
+             <div className="w-12 h-12 rounded-2xl bg-rose-500/20 flex items-center justify-center mb-6">
+              <Fingerprint className="w-6 h-6 text-rose-500" />
+            </div>
+            <h3 className="text-2xl font-bold text-foreground mb-2">Military-grade Privacy</h3>
+            <p className="text-slate-400">We don't sell data. We encrypt it. Your students' and staffs' information is cryptographically protected against external breaches.</p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-24 border-t border-white/5 bg-black/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+           <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-black text-foreground tracking-tight mb-4">Radically Simple Pricing.</h2>
+            <p className="text-slate-400 text-lg">No hidden installation fees. Setup happens in 30 seconds.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-8">
+            <motion.div whileHover={{ scale: 1.02 }} className="bg-card border border-white/10 rounded-3xl p-8 flex flex-col justify-between">
+              <div>
+                <h3 className="text-2xl font-bold text-slate-300 mb-2">Standard Orbit</h3>
+                <p className="text-5xl font-black text-foreground mb-6">Free</p>
+                <ul className="space-y-4 mb-8">
+                  <li className="flex gap-3 text-slate-400"><ShieldCheck className="text-primary w-5 h-5"/> Single Branch Support</li>
+                  <li className="flex gap-3 text-slate-400"><ShieldCheck className="text-primary w-5 h-5"/> 1,000 Students Max</li>
+                  <li className="flex gap-3 text-slate-400"><ShieldCheck className="text-primary w-5 h-5"/> Basic Analytics</li>
+                </ul>
+              </div>
+              <Button variant="outline" className="w-full py-6 rounded-xl border-white/10 text-foreground">Current MVP Tier</Button>
+            </motion.div>
+            
+            <motion.div whileHover={{ scale: 1.02 }} className="bg-gradient-to-b from-primary/20 to-card border border-primary/30 rounded-3xl p-8 flex flex-col justify-between relative overflow-hidden">
+               <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-4 py-1 rounded-bl-xl">POPULAR</div>
+              <div>
+                <h3 className="text-2xl font-bold text-primary mb-2">Enterprise Nexus</h3>
+                <p className="text-5xl font-black text-foreground mb-6">$199<span className="text-lg text-slate-500 font-normal">/mo</span></p>
+                <ul className="space-y-4 mb-8">
+                  <li className="flex gap-3 text-slate-200"><ShieldCheck className="text-primary w-5 h-5"/> Infinite Branches</li>
+                  <li className="flex gap-3 text-slate-200"><ShieldCheck className="text-primary w-5 h-5"/> Infinite Students</li>
+                  <li className="flex gap-3 text-slate-200"><ShieldCheck className="text-primary w-5 h-5"/> Custom Themes & App</li>
+                </ul>
+              </div>
+              <Button className="w-full py-6 rounded-xl hover:scale-105 transition-transform">Contact Sales</Button>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* CTA Bottom */}
-      <section className="py-32 bg-slate-50 relative overflow-hidden">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-8 tracking-tight">Ready to lead with Intelligence?</h2>
-          <Link to="/register">
-            <Button size="lg" className="px-12 h-16 text-lg shadow-2xl">Create Your School Account</Button>
-          </Link>
-          <p className="mt-6 text-slate-500 font-medium italic">Join 5 Pilot Schools in the Phase 0 rollout.</p>
-        </div>
+      {/* About & Trust Section */}
+      <section id="about" className="py-32 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center">
+        <BookOpen className="w-16 h-16 text-slate-800 mx-auto mb-8" />
+        <h2 className="text-3xl font-bold text-foreground mb-6">Built for Educators, by Technologists.</h2>
+        <p className="text-xl text-slate-400 leading-relaxed">
+          The education sector has been abandoned by modern software design for too long, cursed with clunky interfaces from 2005. At School OS, we firmly believe that managing a child's educational environment should feel just as fast, premium, and magical as using the world's best consumer apps.
+        </p>
       </section>
+
+      <Footer />
     </div>
   );
 };
+
+function UsersIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  )
+}

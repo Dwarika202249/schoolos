@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ShieldCheck, ArrowRight, Building2, User, Mail, Lock, Globe } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { User, Mail, Lock, Building2, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
 
@@ -22,8 +22,6 @@ export const RegisterSchoolPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Map frontend fields to backend expected format
-      // Backend expects { name, slug, owner: { firstName, lastName, email, password } }
       const payload = {
         name: formData.name,
         slug: formData.slug,
@@ -34,11 +32,10 @@ export const RegisterSchoolPage = () => {
           password: formData.ownerPassword,
         }
       };
-      
       await register(payload);
       navigate('/dashboard');
     } catch (error) {
-      // toast is already handled in useAuth
+      // Handled in context
     }
   };
 
@@ -47,123 +44,83 @@ export const RegisterSchoolPage = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-slate-50 flex items-center justify-center p-4 py-16">
-      <div className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-5 gap-8">
-        
-        {/* Left Side: Info */}
-        <div className="lg:col-span-2 space-y-8 py-4">
-          <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-4">Launch your school on Cloud.</h2>
-            <p className="text-lg text-slate-600">Join the elite schools using School OS for zero-friction management.</p>
-          </div>
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+      {/* Left Pane - Marketing */}
+      <motion.div 
+        initial={{ opacity: 0, flex: 0 }}
+        animate={{ opacity: 1, flex: 1 }}
+        transition={{ duration: 0.8 }}
+        className="hidden lg:flex lg:w-5/12 bg-card relative overflow-hidden flex-col justify-between p-12 border-r border-white/5"
+      >
+        <img src="/auth-bg.png" alt="Abstract Background" className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-screen" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background" />
 
-          <div className="space-y-6">
-            {[
-              { title: 'Free Pilot', desc: '12-month full access at zero cost.', icon: ShieldCheck },
-              { title: 'Data Privacy', desc: 'Hardware-grade isolation for your school.', icon: Building2 },
-              { title: 'Multi-Branch', desc: 'Scale to infinite campuses instantly.', icon: Globe },
-            ].map((item, i) => (
-              <div key={i} className="flex gap-4">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                  <item.icon className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="font-bold text-slate-900">{item.title}</p>
-                  <p className="text-sm text-slate-500">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="p-6 bg-slate-900 rounded-3xl text-white">
-            <p className="text-sm font-medium italic opacity-80">
-              "By far the most intuitive onboarding we've ever experienced in an ERP."
-            </p>
-            <p className="mt-4 text-xs font-bold uppercase tracking-widest text-primary">Delhi Intl. School</p>
-          </div>
+        <div className="relative z-10">
+          <Link to="/" className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+             <ShieldCheck className="w-6 h-6 text-primary" /> School OS
+          </Link>
         </div>
 
-        {/* Right Side: Form */}
-        <Card className="lg:col-span-3 p-8 border-none shadow-2xl">
-          <form className="space-y-8" onSubmit={handleSubmit}>
-            <div className="space-y-6">
-              <h3 className="text-xl font-bold text-slate-900 border-l-4 border-primary pl-4">School Details</h3>
+        <div className="relative z-10 space-y-6">
+           <h2 className="text-4xl font-black text-white tracking-tight leading-tight">Build the ultimate environment for your staff and students.</h2>
+           <p className="text-slate-400 text-lg">Secure your digital campus today. Registration takes less than 30 seconds.</p>
+           
+           <div className="pt-8 flex items-center gap-4 border-t border-white/10">
+             <div className="flex -space-x-3">
+               {[1,2,3].map(i => (
+                 <div key={i} className="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-900 flex items-center justify-center text-xs font-bold text-white">
+                   {String.fromCharCode(64+i)}
+                 </div>
+               ))}
+             </div>
+             <p className="text-sm font-medium text-slate-400">Join 500+ premium schools worldwide.</p>
+           </div>
+        </div>
+      </motion.div>
+
+      {/* Right Pane - Form */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 relative">
+        <Link to="/login" className="absolute top-8 right-8 text-sm font-semibold text-slate-400 hover:text-white transition-colors">
+          Sign In Instead
+        </Link>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="w-full max-w-xl"
+        >
+          <div className="mb-8">
+            <h1 className="text-3xl font-black text-foreground tracking-tight">Setup your Workspace</h1>
+            <p className="text-slate-400 mt-2 text-sm">Create your multi-tenant isolation unit in seconds.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* School Profile */}
+            <div className="space-y-4">
+              <h3 className="text-xs uppercase tracking-widest font-bold text-primary">School Profile</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input 
-                  label="School Name" 
-                  name="name"
-                  placeholder="e.g. Modern Academy" 
-                  icon={<Building2 className="w-5 h-5" />} 
-                  value={formData.name}
-                  onChange={handleChange}
-                  required 
-                />
-                <Input 
-                  label="Short Code / Slug" 
-                  name="slug"
-                  placeholder="e.g. m-acad" 
-                  value={formData.slug}
-                  onChange={handleChange}
-                  required 
-                />
+                <Input label="School Name" name="name" placeholder="Modern Academy" icon={<Building2 className="w-5 h-5" />} value={formData.name} onChange={handleChange} required />
+                <Input label="Short Code / Slug" name="slug" placeholder="m-acad" value={formData.slug} onChange={handleChange} required />
               </div>
             </div>
 
-            <div className="space-y-6">
-              <h3 className="text-xl font-bold text-slate-900 border-l-4 border-primary pl-4">Owner Profile</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input 
-                  label="First Name" 
-                  name="firstName"
-                  placeholder="John" 
-                  icon={<User className="w-5 h-5" />} 
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  required 
-                />
-                <Input 
-                  label="Last Name" 
-                  name="lastName"
-                  placeholder="Doe" 
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  required 
-                />
+            {/* Owner Identity */}
+            <div className="space-y-4">
+               <h3 className="text-xs uppercase tracking-widest font-bold text-primary">Owner Identity</h3>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input label="First Name" name="firstName" placeholder="John" icon={<User className="w-5 h-5" />} value={formData.firstName} onChange={handleChange} required />
+                <Input label="Last Name" name="lastName" placeholder="Doe" value={formData.lastName} onChange={handleChange} required />
               </div>
-              <Input 
-                label="Email Address" 
-                name="ownerEmail"
-                type="email" 
-                placeholder="admin@school.com" 
-                icon={<Mail className="w-5 h-5" />} 
-                value={formData.ownerEmail}
-                onChange={handleChange}
-                required 
-              />
-              <Input 
-                label="Password" 
-                name="ownerPassword"
-                type="password" 
-                placeholder="••••••••" 
-                icon={<Lock className="w-5 h-5" />} 
-                value={formData.ownerPassword}
-                onChange={handleChange}
-                required 
-              />
+              <Input label="Official Email" name="ownerEmail" type="email" placeholder="admin@school.com" icon={<Mail className="w-5 h-5" />} value={formData.ownerEmail} onChange={handleChange} required />
+              <Input label="Password" name="ownerPassword" type="password" placeholder="••••••••" icon={<Lock className="w-5 h-5" />} value={formData.ownerPassword} onChange={handleChange} required />
             </div>
 
-            <div className="pt-4">
-              <Button size="lg" className="w-full text-base py-6 shadow-xl" isLoading={loading}>
-                Register & Setup School Account
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <p className="mt-6 text-center text-sm text-slate-500">
-                Already have a school account? {' '}
-                <Link to="/login" className="text-primary font-bold hover:underline">Sign In</Link>
-              </p>
-            </div>
+            <Button type="submit" size="lg" className="w-full text-base py-6 shadow-xl shadow-primary/20" isLoading={loading}>
+              Create School Workspace <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
           </form>
-        </Card>
+        </motion.div>
       </div>
     </div>
   );

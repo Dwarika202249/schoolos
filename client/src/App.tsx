@@ -9,6 +9,12 @@ import { PublicLayout } from './layouts/PublicLayout';
 import { LandingPage } from './app/LandingPage';
 import { LoginPage } from './app/LoginPage';
 import { RegisterSchoolPage } from './app/RegisterSchoolPage';
+import { TermsPage } from './app/Terms';
+import { PrivacyPage } from './app/Privacy';
+import { HelpPage } from './app/Help';
+import { FeaturesPage } from './app/Features';
+import { PricingPage } from './app/Pricing';
+import { AboutPage } from './app/About';
 
 // Private Pages
 import { Dashboard } from './app/Dashboard';
@@ -27,6 +33,12 @@ function App() {
           <Route path="/" element={<PublicLayout><LandingPage /></PublicLayout>} />
           <Route path="/login" element={<PublicLayout><LoginPage /></PublicLayout>} />
           <Route path="/register" element={<PublicLayout><RegisterSchoolPage /></PublicLayout>} />
+          <Route path="/terms" element={<PublicLayout><TermsPage /></PublicLayout>} />
+          <Route path="/privacy" element={<PublicLayout><PrivacyPage /></PublicLayout>} />
+          <Route path="/help" element={<PublicLayout><HelpPage /></PublicLayout>} />
+          <Route path="/features" element={<PublicLayout><FeaturesPage /></PublicLayout>} />
+          <Route path="/pricing" element={<PublicLayout><PricingPage /></PublicLayout>} />
+          <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
 
           {/* Private Routes */}
           <Route path="/dashboard" element={

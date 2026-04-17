@@ -1,90 +1,104 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Building2, ArrowRight } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Mail, Lock, ArrowRight, BookOpen, Building2 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
   const { login, loading } = useAuth();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    schoolSlug: '',
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [schoolSlug, setSchoolSlug] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(formData);
+      await login({ email, password, schoolSlug: schoolSlug || undefined });
       navigate('/dashboard');
     } catch (error) {
-      // toast is already handled in useAuth
+      // Errors handled by toast in useAuth
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-slate-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-10">
-          <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-2">Welcome Back.</h2>
-          <p className="text-slate-500 font-medium tracking-tight">Access your institutional portal.</p>
+    <div className="min-h-screen bg-background flex">
+      {/* Left Pane - Visuals */}
+      <motion.div 
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8 }}
+        className="hidden lg:flex w-1/2 relative bg-card overflow-hidden items-center justify-center border-r border-white/5"
+      >
+        <img src="/auth-bg.png" alt="Abstract Background" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+        
+        <div className="relative z-10 max-w-lg px-12 text-center">
+          <div className="w-20 h-20 bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl">
+            <BookOpen className="w-10 h-10 text-primary" />
+          </div>
+          <h2 className="text-4xl font-black text-white tracking-tight mb-4 leading-tight">Welcome back to the future of education.</h2>
+          <p className="text-lg text-slate-300">Sign in to your School OS workspace to manage your campus, students, and finances securely.</p>
         </div>
+      </motion.div>
 
-        <Card className="p-8 shadow-2xl border-none">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <Input 
-              label="School Short Code / Slug" 
-              name="schoolSlug"
-              placeholder="e.g. dps-delhi" 
-              icon={<Building2 className="w-5 h-5" />} 
-              value={formData.schoolSlug}
-              onChange={handleChange}
-              required 
-            />
-            <Input 
-              label="Email Address" 
-              name="email"
-              type="email" 
-              placeholder="admin@school.com" 
-              icon={<Mail className="w-5 h-5" />} 
-              value={formData.email}
-              onChange={handleChange}
-              required 
-            />
-            <div className="space-y-1">
-              <Input 
-                label="Password" 
-                name="password"
-                type="password" 
-                placeholder="••••••••" 
-                icon={<Lock className="w-5 h-5" />} 
-                value={formData.password}
-                onChange={handleChange}
-                required 
+      {/* Right Pane - Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 relative">
+        <Link to="/" className="absolute top-8 right-8 text-sm font-semibold text-slate-400 hover:text-white transition-colors">
+          &larr; Back to Home
+        </Link>
+        
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="w-full max-w-md space-y-8"
+        >
+          <div>
+            <h1 className="text-3xl font-black text-foreground tracking-tight">Sign In</h1>
+            <p className="text-slate-400 mt-2 text-sm">Enter your credentials to access your dashboard.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <Input
+                label="Workspace Slug (Optional)"
+                placeholder="e.g. m-acad"
+                icon={<Building2 className="w-5 h-5" />}
+                value={schoolSlug}
+                onChange={(e) => setSchoolSlug(e.target.value)}
               />
-              <div className="text-right">
-                <button type="button" className="text-xs font-bold text-primary hover:underline">Forgot Password?</button>
-              </div>
+              <Input
+                label="Official Email"
+                type="email"
+                placeholder="you@school.com"
+                icon={<Mail className="w-5 h-5" />}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <Input
+                label="Password"
+                type="password"
+                placeholder="••••••••"
+                icon={<Lock className="w-5 h-5" />}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
             </div>
 
-            <Button size="lg" className="w-full text-base py-6 shadow-xl" isLoading={loading}>
-              Sign In to Dashboard
-              <ArrowRight className="ml-2 w-5 h-5" />
+            <Button type="submit" size="lg" className="w-full text-base py-6 shadow-xl shadow-primary/20" isLoading={loading}>
+              Access Dashboard <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-
-            <p className="text-center text-sm text-slate-500 pt-4 border-t border-slate-50">
-              New to School OS? {' '}
-              <Link to="/register" className="text-primary font-bold hover:underline">Register your school</Link>
+            
+            <p className="text-center text-sm text-slate-500 font-medium">
+              Don't have a workspace? <Link to="/register" className="text-primary hover:underline hover:text-white transition-colors">Register your school</Link>
             </p>
           </form>
-        </Card>
+        </motion.div>
       </div>
     </div>
   );

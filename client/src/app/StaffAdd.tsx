@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -29,6 +29,7 @@ const EMPLOYMENT_TYPES = ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'GUEST'];
 export const StaffAdd = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [branches, setBranches] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -57,6 +58,33 @@ export const StaffAdd = () => {
       accountHolderName: ''
     }
   });
+
+  useEffect(() => {
+    // Generate a secure but human-readable random ID: EMP-XXXXXX
+    const randomHash = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const generatedId = `EMP-${randomHash}`;
+    
+    // Fetch branches for the dropdown
+    const fetchBranches = async () => {
+      try {
+        const res = await api.get('/tenant/branches');
+        const branchData = res.data.data;
+        setBranches(branchData);
+        
+        // Auto-select first branch and apply the generated employeeId
+        setFormData(prev => ({
+          ...prev,
+          employeeId: generatedId,
+          branchId: branchData.length > 0 ? branchData[0].id : ''
+        }));
+      } catch (err) {
+        toast.error('Failed to load branches');
+        // Still apply generated ID even if branch fails
+        setFormData(prev => ({ ...prev, employeeId: generatedId }));
+      }
+    };
+    fetchBranches();
+  }, []);
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
@@ -118,8 +146,15 @@ export const StaffAdd = () => {
                 <option value="STAFF">Support Staff</option>
               </select>
             </div>
-            {/* Added dummy branchId for MVP setup */}
-            <Input label="Branch ID (Auto-fill)" name="branchId" value={formData.branchId} onChange={handleChange} placeholder="Paste a branch ID" required />
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 ml-1">Branch</label>
+              <select name="branchId" value={formData.branchId} onChange={handleChange} title="Select Branch" className="w-full h-12 bg-slate-50 border-none rounded-xl px-4 text-slate-700 font-medium focus:ring-2 focus:ring-primary/20" required>
+                <option value="" disabled>Select a branch</option>
+                {branches.map(b => (
+                  <option key={b.id} value={b.id}>{b.name} ({b.code})</option>
+                ))}
+              </select>
+            </div>
           </Card>
         </section>
 
@@ -129,7 +164,7 @@ export const StaffAdd = () => {
             <h3 className="text-lg font-black text-slate-900 uppercase tracking-tighter">2. Professional Profile</h3>
           </div>
           <Card className="p-6 border-none shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6 bg-white">
-            <Input label="Employee ID" name="employeeId" value={formData.employeeId} onChange={handleChange} icon={<Briefcase className="w-5 h-5" />} placeholder="e.g. STF001" required />
+            <Input label="Employee ID (Auto-Generated)" name="employeeId" value={formData.employeeId} title="ID is permanently assigned" icon={<Briefcase className="w-5 h-5" />} disabled className="bg-slate-100 cursor-not-allowed opacity-70 font-mono text-slate-500" />
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700 ml-1">Designation</label>
               <select name="designation" value={formData.designation} onChange={handleChange} title="Select Designation" className="w-full h-12 bg-slate-50 border-none rounded-xl px-4 text-slate-700 font-medium focus:ring-2 focus:ring-primary/20">
@@ -150,25 +185,25 @@ export const StaffAdd = () => {
         {/* Emergency Contact */}
         <section className="space-y-4">
           <div className="flex items-center gap-2 mb-4 border-l-4 border-primary pl-4">
-            <h3 className="text-lg font-black text-slate-900 uppercase tracking-tighter">3. Emergency Contact</h3>
+            <h3 className="text-lg font-black text-slate-900 uppercase tracking-tighter">3. Emergency Contact <span className="text-sm text-slate-400 font-medium normal-case">(Optional)</span></h3>
           </div>
           <Card className="p-6 border-none shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6 bg-white">
-            <Input label="Contact Name" name="emergencyContact.name" value={formData.emergencyContact.name} onChange={handleChange} icon={<User className="w-5 h-5" />} required />
-            <Input label="Relation" name="emergencyContact.relation" value={formData.emergencyContact.relation} onChange={handleChange} placeholder="e.g. Spouse, Parent" required />
-            <Input label="Phone Number" name="emergencyContact.phone" value={formData.emergencyContact.phone} onChange={handleChange} icon={<PhoneCall className="w-5 h-5" />} required />
+            <Input label="Contact Name" name="emergencyContact.name" value={formData.emergencyContact.name} onChange={handleChange} icon={<User className="w-5 h-5" />} />
+            <Input label="Relation" name="emergencyContact.relation" value={formData.emergencyContact.relation} onChange={handleChange} placeholder="e.g. Spouse, Parent" />
+            <Input label="Phone Number" name="emergencyContact.phone" value={formData.emergencyContact.phone} onChange={handleChange} icon={<PhoneCall className="w-5 h-5" />} />
           </Card>
         </section>
 
         {/* Bank Details */}
         <section className="space-y-4">
           <div className="flex items-center gap-2 mb-4 border-l-4 border-primary pl-4">
-            <h3 className="text-lg font-black text-slate-900 uppercase tracking-tighter">4. Bank & Compensation</h3>
+            <h3 className="text-lg font-black text-slate-900 uppercase tracking-tighter">4. Bank & Compensation <span className="text-sm text-slate-400 font-medium normal-case">(Optional)</span></h3>
           </div>
           <Card className="p-6 border-none shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6 bg-white">
-            <Input label="Bank Name" name="bankDetails.bankName" value={formData.bankDetails.bankName} onChange={handleChange} icon={<Building2 className="w-5 h-5" />} required />
-            <Input label="Account Number" name="bankDetails.accountNumber" value={formData.bankDetails.accountNumber} onChange={handleChange} icon={<CreditCard className="w-5 h-5" />} required />
-            <Input label="IFSC Code" name="bankDetails.ifscCode" value={formData.bankDetails.ifscCode} onChange={handleChange} required />
-            <Input label="Account Holder Name" name="bankDetails.accountHolderName" value={formData.bankDetails.accountHolderName} onChange={handleChange} required />
+            <Input label="Bank Name" name="bankDetails.bankName" value={formData.bankDetails.bankName} onChange={handleChange} icon={<Building2 className="w-5 h-5" />} />
+            <Input label="Account Number" name="bankDetails.accountNumber" value={formData.bankDetails.accountNumber} onChange={handleChange} icon={<CreditCard className="w-5 h-5" />} />
+            <Input label="IFSC Code" name="bankDetails.ifscCode" value={formData.bankDetails.ifscCode} onChange={handleChange} />
+            <Input label="Account Holder Name" name="bankDetails.accountHolderName" value={formData.bankDetails.accountHolderName} onChange={handleChange} />
           </Card>
         </section>
 

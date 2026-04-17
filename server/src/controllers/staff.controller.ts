@@ -11,9 +11,6 @@ export class StaffController {
    * POST /staff — Create a new staff member (User + StaffProfile in a transaction)
    */
   static async createStaff(req: Request, res: Response, next: NextFunction) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
     try {
       const {
         email,
@@ -28,8 +25,14 @@ export class StaffController {
       const schoolId = req.tenantId;
       const createdBy = req.jwtPayload?.userId;
 
+      // Auto-generate employeeId if not provided
+      if (!profileData.employeeId || profileData.employeeId.trim() === '') {
+        const _crypto = require('crypto');
+        profileData.employeeId = `EMP-${_crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+      }
+
       // 1. Check if user already exists in this school
-      const existingUser = await User.findOne({ schoolId, email }).session(session);
+      const existingUser = await User.findOne({ schoolId, email });
       if (existingUser) {
         throw createError(400, ErrorCodes.DUPLICATE_ENTRY, 'User with this email already exists in your school');
       }
@@ -46,7 +49,7 @@ export class StaffController {
         isActive: true,
         createdBy,
       });
-      await user.save({ session });
+      await user.save();
 
       // 3. Create Staff Profile
       const staffProfile = new StaffProfile({
@@ -56,23 +59,18 @@ export class StaffController {
         userId: user._id,
         createdBy,
       });
-      await staffProfile.save({ session });
+      await staffProfile.save();
 
       // 4. Link staff profile back to user
       user.staffProfileId = staffProfile._id as any;
-      await user.save({ session });
-
-      await session.commitTransaction();
+      await user.save();
 
       return ApiResponse.created(res, {
         user: user.toSafeObject(),
         profile: staffProfile,
       }, 'Staff member added successfully');
     } catch (error) {
-      await session.abortTransaction();
       next(error);
-    } finally {
-      session.endSession();
     }
   }
 

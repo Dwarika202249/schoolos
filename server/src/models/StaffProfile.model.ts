@@ -86,23 +86,23 @@ const staffProfileSchema = new Schema<IStaffProfile>(
     relievingDate: Date,
     
     qualifications: [{
-      degree: { type: String, required: true },
-      field: { type: String, required: true },
-      institution: { type: String, required: true },
-      year: { type: Number, required: true },
+      degree: { type: String },
+      field: { type: String },
+      institution: { type: String },
+      year: { type: Number },
     }],
     
     emergencyContact: {
-      name: { type: String, required: true },
-      relation: { type: String, required: true },
-      phone: { type: String, required: true },
+      name: { type: String },
+      relation: { type: String },
+      phone: { type: String },
     },
     
     bankDetails: {
-      bankName: { type: String, required: true },
-      accountNumber: { type: String, required: true },
-      ifscCode: { type: String, required: true, uppercase: true },
-      accountHolderName: { type: String, required: true },
+      bankName: { type: String },
+      accountNumber: { type: String },
+      ifscCode: { type: String, uppercase: true },
+      accountHolderName: { type: String },
     },
     
     aadhaarNumber: String,

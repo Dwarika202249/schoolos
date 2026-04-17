@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { User, IUser } from '../models/User.model';
 import { School, ISchool } from '../models/School.model';
+import { Branch } from '../models/Branch.model';
 import { createError, ErrorCodes } from '../utils/error.util';
 
 export class AuthService {
@@ -39,25 +40,22 @@ export class AuthService {
    * Wrapped in a MongoDB transaction for atomicity.
    */
   static async registerSchool(data: any) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
     try {
       const slug = data.slug || data.schoolSlug;
       const name = data.name || data.schoolName;
 
       // 1. Check if slug exists
-      const existingSchool = await School.findOne({ slug }).session(session);
+      const existingSchool = await School.findOne({ slug });
       if (existingSchool) {
         throw createError(400, ErrorCodes.DUPLICATE_ENTRY, 'School slug already exists');
       }
 
       // 2. Create Owner User first (to get real ObjectId)
       const owner = new User({
-        email: data.ownerEmail || data.email,
-        passwordHash: data.ownerPassword || data.password,
-        firstName: data.ownerFirstName || data.firstName,
-        lastName: data.ownerLastName || data.lastName,
+        email: data.owner?.email || data.ownerEmail || data.email,
+        passwordHash: data.owner?.password || data.ownerPassword || data.password,
+        firstName: data.owner?.firstName || data.ownerFirstName || data.firstName,
+        lastName: data.owner?.lastName || data.ownerLastName || data.lastName,
         role: 'OWNER',
         // schoolId will be set after school creation
       });
@@ -68,32 +66,41 @@ export class AuthService {
         slug,
         code: slug.toUpperCase().replace(/-/g, '').slice(0, 6),
         address: {
-          line1: data.addressLine1 || data.city || 'Not Specified',
-          city: data.city,
-          state: data.state,
-          pincode: data.pincode,
+          line1: data.address?.line1 || data.addressLine1 || data.city || 'Not Specified',
+          city: data.address?.city || data.city || 'Not Specified',
+          state: data.address?.state || data.state || 'Not Specified',
+          pincode: data.address?.pincode || data.pincode || '000000',
         },
-        phone: data.schoolPhone || data.phone,
-        email: data.schoolEmail || data.ownerEmail || data.email,
+        phone: data.schoolPhone || data.phone || '0000000000',
+        email: data.schoolEmail || data.email || data.owner?.email || data.ownerEmail,
         boardAffiliation: data.boardAffiliation || 'Not Specified',
         ownerUserId: owner._id,
       });
 
-      // 4. Link owner to school
-      owner.schoolId = school._id;
-      
-      await school.save({ session });
-      await owner.save({ session });
+      // 4. Create Main Branch (Headquarters)
+      const mainBranch = new Branch({
+        schoolId: school._id,
+        name: 'Main Campus',
+        code: 'HQ',
+        address: school.address,
+        phone: school.phone,
+        email: school.email,
+        isHeadquarters: true,
+        createdBy: owner._id,
+      });
 
-      await session.commitTransaction();
+      // 5. Link owner to school and branch
+      owner.schoolId = school._id;
+      owner.branchId = mainBranch._id as any;
+      
+      await school.save();
+      await mainBranch.save();
+      await owner.save();
 
       const tokens = await this.generateTokens(owner);
       return { school, owner: owner.toSafeObject(), tokens };
     } catch (error) {
-      await session.abortTransaction();
       throw error;
-    } finally {
-      session.endSession();
     }
   }
 

@@ -66,14 +66,18 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/school
 mongoose.connect(MONGODB_URI)
   .then(() => {
     console.log('✅ Connected to MongoDB');
-    app.listen(PORT as number, '0.0.0.0', () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📋 CORS origins: ${CORS_ORIGINS.join(', ')}`);
-    });
+    if (process.env.NODE_ENV !== 'test') {
+      app.listen(PORT as number, '0.0.0.0', () => {
+        console.log(`🚀 Server running on port ${PORT}`);
+        console.log(`📋 CORS origins: ${CORS_ORIGINS.join(', ')}`);
+      });
+    }
   })
   .catch((err) => {
     console.error('❌ Database connection error:', err);
-    process.exit(1);
+    if (process.env.NODE_ENV !== 'test') {
+      process.exit(1);
+    }
   });
 
 export default app;

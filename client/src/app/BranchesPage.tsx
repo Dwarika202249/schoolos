@@ -5,7 +5,6 @@ import {
   Plus, 
   MapPin, 
   Phone, 
-  Info, 
   Trash2, 
   Edit3, 
   Star,
@@ -89,7 +88,7 @@ export const BranchesPage = () => {
            { label: "Active Nodes", val: branches.filter(b => b.isActive).length, icon: Activity },
            { label: "Headquarters", val: 1, icon: Star }
          ].map((stat, i) => (
-           <div key={i} className="p-6 rounded-3xl bg-card border border-white/5 flex items-center gap-4">
+           <div key={`stat-card-${i}`} className="p-6 rounded-3xl bg-card border border-white/5 flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
                 <stat.icon className="w-6 h-6 text-primary" />
               </div>
@@ -103,9 +102,9 @@ export const BranchesPage = () => {
 
       {/* Branches Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {branches.map((branch) => (
+        {branches.map((branch, idx) => (
           <motion.div 
-            key={branch._id}
+            key={branch._id || `branch-node-${idx}`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className={`
@@ -132,7 +131,7 @@ export const BranchesPage = () => {
                   </div>
                   <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
                      <MapPin className="w-4 h-4" />
-                     {branch.address.city}, {branch.address.state}
+                     {branch.address?.city}, {branch.address?.state}
                   </div>
                </div>
             </div>

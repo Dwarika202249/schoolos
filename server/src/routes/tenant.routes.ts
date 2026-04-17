@@ -3,6 +3,7 @@ import { BranchController } from '../controllers/branch.controller';
 import { AcademicYearController } from '../controllers/academicYear.controller';
 import { ClassSectionController } from '../controllers/classSection.controller';
 import { TenantController } from '../controllers/tenant.controller';
+import { FinanceController } from '../controllers/finance.controller';
 import { requireOwner, requireAdmin, requireAnyStaff } from '../middleware/rbac.middleware';
 
 const router = Router();
@@ -32,5 +33,28 @@ router.delete('/classes/:id', requireOwner, ClassSectionController.delete);
 // Docs: PATCH = OWNER only, GET = ADMIN/OWNER
 router.get('/school', requireAdmin, TenantController.getSchool);
 router.patch('/school', requireOwner, TenantController.updateSchool);
+
+// ─── Finance Roles ────────────────────────────────────────────────────────────
+// Fee Management
+router.post('/finance/categories', requireOwner, FinanceController.createCategory);
+router.get('/finance/categories', requireAdmin, FinanceController.listCategories);
+router.patch('/finance/categories/:id', requireOwner, FinanceController.updateCategory);
+router.delete('/finance/categories/:id', requireOwner, FinanceController.deleteCategory);
+router.post('/finance/structures', requireOwner, FinanceController.createStructure);
+router.get('/finance/structures', requireAdmin, FinanceController.listStructures);
+
+// Invoicing & Collection
+router.get('/finance/invoices', requireAdmin, FinanceController.listInvoices);
+router.post('/finance/invoices/generate-class', requireAdmin, FinanceController.generateClassInvoices);
+router.post('/finance/collect', requireAdmin, FinanceController.recordPayment);
+router.get('/finance/transactions', requireAdmin, FinanceController.listTransactions);
+router.get('/finance/stats', requireAdmin, FinanceController.getStats);
+
+// Payroll
+router.get('/finance/payroll/config/:staffId', requireAdmin, FinanceController.getSalaryConfig);
+router.patch('/finance/payroll/config/:staffId', requireOwner, FinanceController.updateSalaryConfig);
+router.post('/finance/payroll/process', requireOwner, FinanceController.processPayroll);
+router.get('/finance/payroll', requireAdmin, FinanceController.getPayrolls);
+router.post('/finance/payroll/payout', requireOwner, FinanceController.payoutPayroll);
 
 export default router;

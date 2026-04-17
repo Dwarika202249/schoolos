@@ -25,6 +25,10 @@ import { StaffManagement } from './app/StaffManagement';
 import { StaffAdd } from './app/StaffAdd';
 import { SettingsPage } from './app/SettingsPage';
 import { BranchesPage } from './app/BranchesPage';
+import { FinanceDashboard } from './app/FinanceDashboard';
+import { FeeManagement } from './app/FeeManagement';
+import { PayrollDashboard } from './app/PayrollDashboard';
+import { InvoicesPage } from './app/InvoicesPage';
 
 function App() {
   return (
@@ -94,7 +98,25 @@ function App() {
           {/* Generic Redirects for Coming Soon pages */}
           <Route path="/finance" element={
             <AuthGuard>
-              <MainLayout><div className="p-8 text-center text-slate-500 font-medium">Finance Management Page (Coming Soon)</div></MainLayout>
+              <MainLayout><FinanceDashboard /></MainLayout>
+            </AuthGuard>
+          } />
+
+          <Route path="/finance/fees" element={
+            <AuthGuard>
+              <MainLayout><FeeManagement /></MainLayout>
+            </AuthGuard>
+          } />
+
+          <Route path="/finance/invoices" element={
+            <AuthGuard>
+              <MainLayout><InvoicesPage /></MainLayout>
+            </AuthGuard>
+          } />
+
+          <Route path="/finance/payroll" element={
+            <AuthGuard>
+              <MainLayout><PayrollDashboard /></MainLayout>
             </AuthGuard>
           } />
 

@@ -23,6 +23,7 @@ import { StudentEnrollment } from './app/StudentEnrollment';
 import { AcademicConfig } from './app/AcademicConfig';
 import { StaffManagement } from './app/StaffManagement';
 import { StaffAdd } from './app/StaffAdd';
+import { SettingsPage } from './app/SettingsPage';
 
 function App() {
   return (
@@ -77,7 +78,14 @@ function App() {
             </AuthGuard>
           } />
 
-          {/* Generic Redirects */}
+          {/* Settings - A-Z Working Feature */}
+          <Route path="/settings" element={
+            <AuthGuard>
+              <MainLayout><SettingsPage /></MainLayout>
+            </AuthGuard>
+          } />
+
+          {/* Generic Redirects for Coming Soon pages */}
           <Route path="/finance" element={
             <AuthGuard>
               <MainLayout><div className="p-8 text-center text-slate-500 font-medium">Finance Management Page (Coming Soon)</div></MainLayout>
@@ -87,12 +95,6 @@ function App() {
           <Route path="/branches" element={
             <AuthGuard>
               <MainLayout><div className="p-8 text-center text-slate-500 font-medium">Branch Management Page (Coming Soon)</div></MainLayout>
-            </AuthGuard>
-          } />
-          
-          <Route path="/settings" element={
-            <AuthGuard>
-              <MainLayout><div className="p-8 text-center text-slate-500 font-medium">Settings Page (Coming Soon)</div></MainLayout>
             </AuthGuard>
           } />
 

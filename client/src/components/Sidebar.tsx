@@ -10,7 +10,8 @@ import {
   CalendarDays,
   Menu,
   X,
-  LogOut
+  LogOut,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -33,7 +34,7 @@ export const Sidebar = () => {
       {/* Mobile menu button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md lg:hidden"
+        className="fixed top-4 left-4 z-50 p-2 bg-card border border-white/10 rounded-lg shadow-xl lg:hidden text-foreground"
       >
         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
       </button>
@@ -41,68 +42,56 @@ export const Sidebar = () => {
       {/* Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 text-white transform transition-transform duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-40 w-64 bg-card border-r border-white/5 transform transition-all duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:inset-0
       `}>
         <div className="flex flex-col h-full">
-          {/* Logo */}
-          <Link to="/dashboard" className="flex items-center gap-3 px-6 py-8 hover:opacity-80 transition-opacity">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-              <BookOpen className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">School OS</span>
-          </Link>
+          {/* Logo Area */}
+          <div className="px-6 py-8">
+            <Link to="/dashboard" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
+                <img src="/schoolos-logo.png" alt="Logo" className="w-6 h-6 object-contain brightness-0 invert" />
+              </div>
+              <span className="text-xl font-black tracking-tight text-foreground">School OS</span>
+            </Link>
+          </div>
 
-          {/* Nav links */}
-          <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+          {/* Navigation Section */}
+          <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto custom-scrollbar">
+            <p className="text-[10px] uppercase font-black tracking-[0.2em] text-slate-500 mb-4 px-4">Menu</p>
             {navigation.map((item) => (
               <NavLink
                 key={item.name}
                 to={item.href}
                 className={({ isActive }) => `
-                  flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
+                  flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group
                   ${isActive
-                    ? 'bg-primary text-white shadow-lg shadow-primary/25'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
+                    ? 'bg-primary text-white shadow-xl shadow-primary/25'
+                    : 'text-slate-500 hover:text-foreground hover:bg-white/5'}
                 `}
                 onClick={() => setIsOpen(false)}
               >
-                <item.icon className="w-5 h-5" />
-                <span className="font-medium">{item.name}</span>
+                <item.icon className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110`} />
+                <span className="font-bold text-sm">{item.name}</span>
               </NavLink>
             ))}
           </nav>
 
-          <button
-            onClick={() => logout()}
-            className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-rose-500/10 hover:text-rose-500 rounded-xl transition-all duration-200 group"
-          >
-            <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span className="font-semibold text-sm">Logout</span>
-          </button>
-
-          {/* User profile footer */}
-          <div className="p-4 bg-slate-800/50 mt-auto space-y-2">
-            <div className="flex items-center gap-3 p-2 rounded-xl">
-              <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-primary uppercase">
-                {user?.firstName?.charAt(0) || 'U'}
-                {user?.lastName?.charAt(0) || ''}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate capitalize">{user?.firstName} {user?.lastName}</p>
-                <p className="text-xs text-slate-400 truncate">{school?.name || 'School OS'}</p>
-              </div>
-            </div>
-
-
+          {/* Footer Card */}
+          <div className="p-4 border-t border-white/5">
+             <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 relative overflow-hidden group">
+                <Sparkles className="absolute -right-2 -bottom-2 w-12 h-12 text-primary opacity-10 group-hover:scale-125 transition-transform" />
+                <p className="text-xs font-black text-primary uppercase mb-1 tracking-tight">Enterprise Nexus</p>
+                <p className="text-[10px] text-slate-400 font-medium">Infinite seats enabled.</p>
+             </div>
           </div>
         </div>
       </div>

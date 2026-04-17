@@ -15,9 +15,40 @@ interface AuthContextType {
   login: (credentials: any) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => void;
+  updateSchoolState: (school: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Helper to convert hex to HSL for Tailwind variables
+const hexToHsl = (hex: string): string => {
+  let r = 0, g = 0, b = 0;
+  if (hex.length === 4) {
+    r = parseInt(hex[1] + hex[1], 16);
+    g = parseInt(hex[2] + hex[2], 16);
+    b = parseInt(hex[3] + hex[3], 16);
+  } else if (hex.length === 7) {
+    r = parseInt(hex.substring(1, 3), 16);
+    g = parseInt(hex.substring(3, 5), 16);
+    b = parseInt(hex.substring(5, 7), 16);
+  }
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s, l = (max + min) / 2;
+  if (max === min) {
+    h = s = 0; 
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+};
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const auth = useSelector((state: RootState) => state.auth);
@@ -42,6 +73,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     rehydrate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /**
+   * Theme Branding Engine:
+   * Dynamically injects school primary color into CSS variables
+   */
+  useEffect(() => {
+    if (auth.school?.branding?.primaryColor) {
+      const hsl = hexToHsl(auth.school.branding.primaryColor);
+      document.documentElement.style.setProperty('--primary', hsl);
+    } else {
+      // Default blue-violet
+      document.documentElement.style.setProperty('--primary', '250 83.2% 53.3%');
+    }
+  }, [auth.school?.branding?.primaryColor]);
 
   const login = async (credentials: any) => {
     dispatch(authStart());
@@ -89,8 +134,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.success('Logged out');
   };
 
+  const updateSchoolState = (school: any) => {
+    dispatch(authSuccess({ 
+      user: auth.user, 
+      school, 
+      token: auth.token as string 
+    }));
+  };
+
   return (
-    <AuthContext.Provider value={{ ...auth, login, register, logout }}>
+    <AuthContext.Provider value={{ ...auth, login, register, logout, updateSchoolState }}>
       {children}
     </AuthContext.Provider>
   );

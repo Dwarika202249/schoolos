@@ -1,9 +1,12 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { BookOpen } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Public Navbar */}
@@ -27,12 +30,20 @@ export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children
 
             {/* Actions */}
             <div className="flex items-center gap-4">
-              <Link to="/login">
-                <Button variant="ghost">Sign In</Button>
-              </Link>
-              <Link to="/register">
-                <Button>Get Started</Button>
-              </Link>
+              {isAuthenticated ? (
+                <Link to="/dashboard">
+                  <Button>Go to Dashboard</Button>
+                </Link>
+              ) : (
+                <>
+                  <Link to="/login">
+                    <Button variant="ghost">Sign In</Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button>Get Started</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

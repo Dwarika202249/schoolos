@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -54,12 +54,12 @@ export const Sidebar = () => {
       `}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center gap-3 px-6 py-8">
+          <Link to="/dashboard" className="flex items-center gap-3 px-6 py-8 hover:opacity-80 transition-opacity">
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
               <BookOpen className="w-6 h-6 text-white" />
             </div>
             <span className="text-xl font-bold tracking-tight">School OS</span>
-          </div>
+          </Link>
 
           {/* Nav links */}
           <nav className="flex-1 px-4 space-y-1 overflow-y-auto">

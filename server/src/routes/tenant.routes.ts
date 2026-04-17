@@ -4,6 +4,8 @@ import { AcademicYearController } from '../controllers/academicYear.controller';
 import { ClassSectionController } from '../controllers/classSection.controller';
 import { TenantController } from '../controllers/tenant.controller';
 import { FinanceController } from '../controllers/finance.controller';
+import { StaffController } from '../controllers/staff.controller';
+import { SubjectController } from '../controllers/subject.controller';
 import { requireOwner, requireAdmin, requireAnyStaff } from '../middleware/rbac.middleware';
 
 const router = Router();
@@ -29,10 +31,22 @@ router.get('/classes', requireAnyStaff, ClassSectionController.list);
 router.patch('/classes/:id', requireAdmin, ClassSectionController.update);
 router.delete('/classes/:id', requireOwner, ClassSectionController.delete);
 
+// ─── Subject Routes ───────────────────────────────────────────────────────────
+router.post('/subjects', requireAdmin, SubjectController.create);
+router.get('/subjects', requireAnyStaff, SubjectController.list);
+router.patch('/subjects/:id', requireAdmin, SubjectController.update);
+router.delete('/subjects/:id', requireOwner, SubjectController.delete);
+
 // ─── School Settings Routes ───────────────────────────────────────────────────
 // Docs: PATCH = OWNER only, GET = ADMIN/OWNER
 router.get('/school', requireAdmin, TenantController.getSchool);
 router.patch('/school', requireOwner, TenantController.updateSchool);
+
+// ─── Staff Routes ─────────────────────────────────────────────────────────────
+router.post('/staff', requireAdmin, StaffController.createStaff);
+router.get('/staff', requireAdmin, StaffController.getStaffList);
+router.get('/staff/:id', requireAdmin, StaffController.getStaffDetails);
+router.patch('/staff/:id', requireAdmin, StaffController.updateStaff);
 
 // ─── Finance Roles ────────────────────────────────────────────────────────────
 // Fee Management

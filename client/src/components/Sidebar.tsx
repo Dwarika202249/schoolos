@@ -15,15 +15,29 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Students', href: '/students', icon: Users },
-  { name: 'Staff', href: '/staff', icon: Users },
-  { name: 'Academic', href: '/academic', icon: BookOpen },
-  { name: 'Finance', href: '/finance', icon: CreditCard },
-  { name: 'Branches', href: '/branches', icon: Building2 },
-  { name: 'Settings', href: '/settings', icon: Settings },
-];
+const getNavigation = (role: string) => {
+  const base = [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Students', href: '/students', icon: Users },
+  ];
+
+  if (role === 'OWNER' || role === 'ADMIN') {
+    base.push(
+      { name: 'Staff', href: '/staff', icon: Users },
+      { name: 'Academic', href: '/academic', icon: BookOpen },
+      { name: 'Finance', href: '/finance', icon: CreditCard }
+    );
+  }
+
+  if (role === 'OWNER') {
+    base.push(
+      { name: 'Branches', href: '/branches', icon: Building2 },
+      { name: 'Settings', href: '/settings', icon: Settings }
+    );
+  }
+
+  return base;
+};
 
 export const Sidebar = () => {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -54,20 +68,25 @@ export const Sidebar = () => {
         lg:translate-x-0 lg:static lg:inset-0
       `}>
         <div className="flex flex-col h-full">
-          {/* Logo Area */}
           <div className="px-6 py-8">
             <Link to="/dashboard" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
-                <img src="/schoolos-logo.png" alt="Logo" className="w-6 h-6 object-contain brightness-0 invert" />
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform overflow-hidden font-black text-white">
+                {school?.branding?.logoUrl ? (
+                  <img src={school.branding.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{school?.name?.charAt(0) || 'S'}</span>
+                )}
               </div>
-              <span className="text-xl font-black tracking-tight text-foreground">School OS</span>
+              <span className="text-xl font-black tracking-tight text-foreground truncate max-w-[140px]">
+                {school?.name || 'School OS'}
+              </span>
             </Link>
           </div>
 
           {/* Navigation Section */}
           <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto custom-scrollbar">
             <p className="text-[10px] uppercase font-black tracking-[0.2em] text-slate-500 mb-4 px-4">Menu</p>
-            {navigation.map((item) => (
+            {getNavigation(user?.role || 'STAFF').map((item) => (
               <NavLink
                 key={item.name}
                 to={item.href}
@@ -84,6 +103,17 @@ export const Sidebar = () => {
               </NavLink>
             ))}
           </nav>
+
+          {/* Logout Section */}
+          <div className="p-4 border-t border-white/5">
+             <button 
+               onClick={logout}
+               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all font-bold text-sm"
+             >
+                <LogOut className="w-5 h-5" />
+                <span>Logout</span>
+             </button>
+          </div>
 
           {/* Footer Card */}
           <div className="p-4 border-t border-white/5">

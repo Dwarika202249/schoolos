@@ -10,11 +10,11 @@ interface CardProps {
 
 export const Card: React.FC<CardProps> = ({ children, title, subtitle, className = '', actions }) => {
   return (
-    <div className={`bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden ${className}`}>
+    <div className={`bg-card rounded-3xl border border-white/10 shadow-xl shadow-black/20 hover:border-primary/20 transition-all duration-300 overflow-hidden ${className}`}>
       {(title || subtitle || actions) && (
-        <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
+        <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between">
           <div>
-            {title && <h3 className="text-xl font-bold text-slate-900">{title}</h3>}
+            {title && <h3 className="text-xl font-bold text-foreground">{title}</h3>}
             {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
           </div>
           {actions && <div className="flex items-center gap-2">{actions}</div>}

@@ -140,4 +140,31 @@ export class StaffController {
       next(error);
     }
   }
+
+  /**
+   * PATCH /staff/:id/status — Toggle active status
+   */
+  static async toggleStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { isActive } = req.body;
+
+      const staff = await StaffProfile.findOneAndUpdate(
+        withTenantScope(req, { _id: id }),
+        { isActive, updatedBy: req.jwtPayload?.userId },
+        { new: true }
+      );
+
+      if (!staff) {
+        throw createError(404, ErrorCodes.NOT_FOUND, 'Staff member not found');
+      }
+
+      // Also update related User's active status
+      await User.findByIdAndUpdate(staff.userId, { isActive });
+
+      return ApiResponse.success(res, staff, `Staff member ${isActive ? 'activated' : 'deactivated'}`);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

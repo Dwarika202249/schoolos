@@ -23,6 +23,8 @@ import { StudentEnrollment } from './app/StudentEnrollment';
 import { AcademicConfig } from './app/AcademicConfig';
 import { StaffManagement } from './app/StaffManagement';
 import { StaffAdd } from './app/StaffAdd';
+import { StaffEdit } from './app/StaffEdit';
+import { StaffProfileView } from './app/StaffProfileView';
 import { SettingsPage } from './app/SettingsPage';
 import { BranchesPage } from './app/BranchesPage';
 import { FinanceDashboard } from './app/FinanceDashboard';
@@ -80,6 +82,18 @@ function App() {
           <Route path="/staff/add" element={
             <AuthGuard>
               <MainLayout><StaffAdd /></MainLayout>
+            </AuthGuard>
+          } />
+
+          <Route path="/staff/:id" element={
+            <AuthGuard>
+              <MainLayout><StaffProfileView /></MainLayout>
+            </AuthGuard>
+          } />
+
+          <Route path="/staff/edit/:id" element={
+            <AuthGuard>
+              <MainLayout><StaffEdit /></MainLayout>
             </AuthGuard>
           } />
 

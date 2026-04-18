@@ -39,14 +39,9 @@ classSectionSchema.pre<IClassSection>('save', function(next) {
   next();
 });
 
-classSectionSchema.index({ 
-  schoolId: 1, 
-  branchId: 1, 
-  academicYearId: 1, 
-  grade: 1, 
-  section: 1 
-}, { 
-  unique: true 
-});
+classSectionSchema.index(
+  { schoolId: 1, branchId: 1, academicYearId: 1, grade: 1, section: 1 }, 
+  { unique: true, partialFilterExpression: { isDeleted: false } }
+);
 
 export const ClassSection = model<IClassSection>('ClassSection', classSectionSchema);

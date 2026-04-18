@@ -59,6 +59,10 @@ export class ClassSectionController {
   static async delete(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
+
+      // TODO: Once Student model is ready, check for active enrollments
+      // For now, Class is a top-level entity, but we keep it safe.
+
       const deleted = await ClassSection.findOneAndUpdate(
         { _id: id, schoolId: req.tenantId },
         { 

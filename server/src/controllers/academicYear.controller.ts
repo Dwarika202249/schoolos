@@ -68,6 +68,23 @@ export class AcademicYearController {
   static async delete(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
+
+      // 1. Dependency Guard: Check for Classes in this session
+      const ClassSection = (await import('../models/ClassSection.model')).ClassSection;
+      const classCount = await ClassSection.countDocuments({ 
+        schoolId: req.tenantId, 
+        academicYearId: id,
+        isDeleted: false 
+      });
+
+      if (classCount > 0) {
+        throw createError(
+          400, 
+          ErrorCodes.VALIDATION_ERROR, 
+          "Cannot delete session. There are active classes defined for this academic year."
+        );
+      }
+
       const deleted = await AcademicYear.findOneAndUpdate(
         { _id: id, schoolId: req.tenantId },
         { 

@@ -52,6 +52,23 @@ export class SubjectController {
   static async delete(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
+
+      // 1. Dependency Guard: Check if subject is assigned to any class
+      const ClassSection = (await import('../models/ClassSection.model')).ClassSection;
+      const inUse = await ClassSection.findOne({ 
+        schoolId: req.tenantId, 
+        subjectIds: id,
+        isDeleted: false 
+      });
+
+      if (inUse) {
+        throw createError(
+          400, 
+          ErrorCodes.VALIDATION_ERROR, 
+          "Cannot delete subject. It is currently assigned to one or more classes."
+        );
+      }
+
       const subject = await Subject.findOneAndUpdate(
         { _id: id, schoolId: req.tenantId },
         { 

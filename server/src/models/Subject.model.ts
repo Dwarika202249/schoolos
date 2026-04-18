@@ -37,7 +37,10 @@ const subjectSchema = new Schema<ISubject>(
   baseSchemaOptions
 );
 
-// Unique subject name per school
-subjectSchema.index({ schoolId: 1, name: 1 }, { unique: true });
+// Unique subject name per school (Active subjects only)
+subjectSchema.index(
+  { schoolId: 1, name: 1 }, 
+  { unique: true, partialFilterExpression: { isDeleted: false } }
+);
 
 export const Subject = model<ISubject>('Subject', subjectSchema);

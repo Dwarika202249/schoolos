@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Plus,
-  Calendar,
-  Layers,
-  BookOpen,
-  Settings2,
-  Trash2,
+import { 
+  Plus, 
+  Calendar, 
+  Layers, 
+  BookOpen, 
+  Settings2, 
+  Trash2, 
   Edit2,
   CheckCircle2,
   AlertCircle
@@ -22,7 +22,7 @@ type Tab = 'sessions' | 'grades' | 'subjects';
 export const AcademicConfig = () => {
   const [activeTab, setActiveTab] = useState<Tab>('sessions');
   const [loading, setLoading] = useState(true);
-
+  
   // Data State
   const [years, setYears] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
@@ -33,6 +33,9 @@ export const AcademicConfig = () => {
   const [showYearModal, setShowYearModal] = useState(false);
   const [showClassModal, setShowClassModal] = useState(false);
   const [showSubjectModal, setShowSubjectModal] = useState(false);
+  
+  // Deletion States
+  const [itemToDelete, setItemToDelete] = useState<{ id: string, type: 'class' | 'subject' } | null>(null);
 
   const [editingItem, setEditingItem] = useState<any>(null);
   const [newYear, setNewYear] = useState({ name: '', startDate: '', endDate: '', isCurrent: false });
@@ -66,13 +69,18 @@ export const AcademicConfig = () => {
   const handleSaveYear = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...newYear,
+        startDate: newYear.startDate.includes('T') ? newYear.startDate : `${newYear.startDate}T00:00:00.000Z`,
+        endDate: newYear.endDate.includes('T') ? newYear.endDate : `${newYear.endDate}T23:59:59.999Z`,
+      };
+
       if (editingItem) {
         const id = editingItem.id || editingItem._id;
-        if (!id) throw new Error("Invalid object identifier");
-        await api.patch(`/tenant/academic-years/${id}`, newYear);
+        await api.patch(`/tenant/academic-years/${id}`, payload);
         toast.success('Session updated');
       } else {
-        await api.post('/tenant/academic-years', newYear);
+        await api.post('/tenant/academic-years', payload);
         toast.success('Session created');
       }
       setShowYearModal(false);
@@ -89,7 +97,6 @@ export const AcademicConfig = () => {
     try {
       if (editingItem) {
         const id = editingItem.id || editingItem._id;
-        if (!id) throw new Error("Invalid object identifier");
         await api.patch(`/tenant/classes/${id}`, newClass);
         toast.success('Class updated');
       } else {
@@ -98,6 +105,7 @@ export const AcademicConfig = () => {
       }
       setShowClassModal(false);
       setEditingItem(null);
+      setNewClass({ grade: '', section: '', branchId: '', academicYearId: '', maxStrength: 60 });
       fetchData();
     } catch (error) {
       toast.error('Failed to save class');
@@ -109,7 +117,6 @@ export const AcademicConfig = () => {
     try {
       if (editingItem) {
         const id = editingItem.id || editingItem._id;
-        if (!id) throw new Error("Invalid object identifier");
         await api.patch(`/tenant/subjects/${id}`, newSubject);
         toast.success('Subject updated');
       } else {
@@ -125,13 +132,17 @@ export const AcademicConfig = () => {
     }
   };
 
-  const handleDeleteSubject = async (id: string) => {
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
     try {
-      await api.delete(`/tenant/subjects/${id}`);
-      toast.success('Subject removed');
+      const endpoint = itemToDelete.type === 'class' ? 'classes' : 'subjects';
+      await api.delete(`/tenant/${endpoint}/${itemToDelete.id}`);
+      toast.success(`${itemToDelete.type === 'class' ? 'Class' : 'Subject'} removed successfully`);
       fetchData();
-    } catch (error) {
-      toast.error('Subject is linked to classes');
+    } catch (error: any) {
+      toast.error(error.response?.data?.error?.message || `Failed to remove ${itemToDelete.type}`);
+    } finally {
+      setItemToDelete(null);
     }
   };
 
@@ -228,18 +239,19 @@ export const AcademicConfig = () => {
               <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <Layers className="w-4 h-4" /> Institutional Structure
               </h3>
-              <Button size="sm" onClick={() => { setEditingItem(null); setShowClassModal(true); }} className="rounded-xl px-4">
+              <Button size="sm" onClick={() => { setEditingItem(null); setNewClass({ grade: '', section: '', branchId: '', academicYearId: '', maxStrength: 60 }); setShowClassModal(true); }} className="rounded-xl px-4">
                 <Plus className="w-4 h-4 mr-2" /> Define Class
               </Button>
             </div>
 
             <div className="bg-card border border-white/5 rounded-[2.5rem] overflow-hidden">
-              <table className="w-full text-left">
+              <table className="w-full text-left font-sans">
                 <thead>
                   <tr className="bg-white/5 border-b border-white/5">
                     <th className="px-8 py-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">Class / Grade</th>
                     <th className="px-8 py-5 text-[10px] font-black uppercase text-slate-500 tracking-widest">Section</th>
-                    <th className="px-8 py-5 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">Capacity</th>
+                    <th className="px-8 py-5 text-[10px] font-black uppercase text-slate-500 tracking-widest text-center">Capacity</th>
+                    <th className="px-8 py-5 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -253,14 +265,32 @@ export const AcademicConfig = () => {
                           Section {cls.section}
                         </span>
                       </td>
-                      <td className="px-8 py-5 text-right font-black text-slate-400">
+                      <td className="px-8 py-5 text-center font-black text-slate-400">
                         {cls.maxStrength} Students
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                           <button 
+                             onClick={() => { setEditingItem(cls); setNewClass(cls); setShowClassModal(true); }} 
+                             className="p-2 text-slate-400 hover:text-white transition-colors"
+                             title="Edit Class"
+                           >
+                              <Edit2 className="w-4 h-4" />
+                           </button>
+                           <button 
+                             onClick={() => setItemToDelete({ id: cls.id || cls._id, type: 'class' })} 
+                             className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
+                             title="Delete Class"
+                           >
+                              <Trash2 className="w-4 h-4" />
+                           </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                   {classes.length === 0 && (
                     <tr key="empty-classes-row">
-                      <td colSpan={3} className="px-8 py-20 text-center text-slate-500 font-medium">
+                      <td colSpan={4} className="px-8 py-20 text-center text-slate-500 font-medium">
                         No classes defined yet.
                       </td>
                     </tr>
@@ -281,9 +311,9 @@ export const AcademicConfig = () => {
           >
             <div className="flex justify-between items-center">
               <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <BookOpen className="w-4 h-4" /> Global Subject Bank
+                < BookOpen className="w-4 h-4" /> Global Subject Bank
               </h3>
-              <Button size="sm" onClick={() => { setEditingItem(null); setShowSubjectModal(true); }} className="rounded-xl px-4">
+              <Button size="sm" onClick={() => { setEditingItem(null); setNewSubject({ name: '', code: '', type: 'CORE' }); setShowSubjectModal(true); }} className="rounded-xl px-4">
                 <Plus className="w-4 h-4 mr-2" /> New Subject
               </Button>
             </div>
@@ -297,7 +327,7 @@ export const AcademicConfig = () => {
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
                       <button onClick={() => { setEditingItem(sub); setNewSubject(sub); setShowSubjectModal(true); }} className="p-2 text-slate-400 hover:text-white transition-colors" title="Edit Subject"><Edit2 className="w-4 h-4" /></button>
-                      <button onClick={() => handleDeleteSubject(sub.id || sub._id)} className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors" title="Delete Subject"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={() => setItemToDelete({ id: sub.id || sub._id, type: 'subject' })} className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors" title="Delete Subject"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </div>
                   <div>
@@ -372,19 +402,23 @@ export const AcademicConfig = () => {
                 <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary">
                   <Layers className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-black">Define Class</h3>
+                <h3 className="text-xl font-black">{editingItem ? 'Edit Class' : 'Define Class'}</h3>
               </div>
 
               <div className="space-y-4">
-                <Input label="Grade / Class Name" placeholder="e.g. Grade 10" value={newClass.grade} onChange={e => setNewClass({ ...newClass, grade: e.target.value })} required />
-                <Input label="Section Name" placeholder="e.g. A" value={newClass.section} onChange={e => setNewClass({ ...newClass, section: e.target.value })} required />
+                <div className="grid grid-cols-2 gap-4">
+                   <Input label="Grade / Class Name" placeholder="e.g. Grade 10" value={newClass.grade} onChange={e => setNewClass({ ...newClass, grade: e.target.value })} required />
+                   <Input label="Section Name" placeholder="e.g. A" value={newClass.section} onChange={e => setNewClass({ ...newClass, section: e.target.value })} required />
+                </div>
+
+                <Input label="Max Strength (Capacity)" type="number" placeholder="60" value={newClass.maxStrength} onChange={e => setNewClass({ ...newClass, maxStrength: parseInt(e.target.value) })} required />
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Branch</label>
                     <select
                       title="Branch"
-                      className="bg-card border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-primary/40"
+                      className="w-full bg-card border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-primary/40 text-foreground"
                       value={newClass.branchId}
                       onChange={e => setNewClass({ ...newClass, branchId: e.target.value })}
                       required
@@ -397,7 +431,7 @@ export const AcademicConfig = () => {
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Session</label>
                     <select
                       title="Session"
-                      className="bg-card border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-primary/40"
+                      className="w-full bg-card border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-primary/40 text-foreground"
                       value={newClass.academicYearId}
                       onChange={e => setNewClass({ ...newClass, academicYearId: e.target.value })}
                       required
@@ -411,7 +445,7 @@ export const AcademicConfig = () => {
 
               <div className="flex gap-4 pt-4">
                 <Button variant="outline" type="button" className="flex-1 py-6 rounded-2xl" onClick={() => setShowClassModal(false)}>Cancel</Button>
-                <Button type="submit" className="flex-1 py-6 rounded-2xl font-black shadow-xl shadow-primary/20">Create Class</Button>
+                <Button type="submit" className="flex-1 py-6 rounded-2xl font-black shadow-xl shadow-primary/20">Save Class</Button>
               </div>
             </motion.form>
           </div>
@@ -444,7 +478,7 @@ export const AcademicConfig = () => {
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Type</label>
                   <select
                     title="Type"
-                    className="bg-card border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-primary/40"
+                    className="w-full bg-card border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:border-primary/40 text-foreground"
                     value={newSubject.type}
                     onChange={e => setNewSubject({ ...newSubject, type: e.target.value })}
                     required
@@ -465,6 +499,14 @@ export const AcademicConfig = () => {
           </div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal 
+        isOpen={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        onConfirm={handleDeleteConfirm}
+        title={`Delete ${itemToDelete?.type === 'class' ? 'Class' : 'Subject'}`}
+        message={`Are you sure you want to remove this ${itemToDelete?.type}? This action cannot be undone.`}
+      />
     </div>
   );
 };

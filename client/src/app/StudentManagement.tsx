@@ -102,11 +102,12 @@ export const StudentManagement = () => {
     const filteredStudents = students.filter(student => {
         const matchesSearch =
             student.admissionNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (student.userId?.firstName + ' ' + student.userId?.lastName).toLowerCase().includes(searchTerm.toLowerCase());
+            (student.userId?.firstName + ' ' + student.userId?.lastName).toLowerCase().includes(searchTerm.toLowerCase()) ||
+            student.guardians.some(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
         if (!matchesSearch) return false;
         if (activeFilter === 'ACTIVE' && student.status !== 'ACTIVE') return false;
-        if (activeFilter === 'INACTIVE' && student.status === 'INACTIVE') return false;
+        if (activeFilter === 'INACTIVE' && student.status !== 'INACTIVE') return false;
         // Add logic for taxonomy filters if needed later
         return true;
     });

@@ -20,6 +20,8 @@ import { AboutPage } from './app/About';
 import { Dashboard } from './app/Dashboard';
 import { StudentManagement } from './app/StudentManagement';
 import { StudentEnrollment } from './app/StudentEnrollment';
+import { StudentProfileView } from './app/StudentProfileView';
+import { StudentEdit } from './app/StudentEdit';
 import { AcademicConfig } from './app/AcademicConfig';
 import { StaffManagement } from './app/StaffManagement';
 import { StaffAdd } from './app/StaffAdd';
@@ -64,6 +66,18 @@ function App() {
           <Route path="/students/enroll" element={
             <AuthGuard>
               <MainLayout><StudentEnrollment /></MainLayout>
+            </AuthGuard>
+          } />
+          
+          <Route path="/students/:id" element={
+            <AuthGuard>
+              <MainLayout><StudentProfileView /></MainLayout>
+            </AuthGuard>
+          } />
+
+          <Route path="/students/edit/:id" element={
+            <AuthGuard>
+              <MainLayout><StudentEdit /></MainLayout>
             </AuthGuard>
           } />
           

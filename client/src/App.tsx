@@ -29,6 +29,7 @@ import { StaffAdd } from './app/StaffAdd';
 import { StaffEdit } from './app/StaffEdit';
 import { StaffProfileView } from './app/StaffProfileView';
 import { SettingsPage } from './app/SettingsPage';
+import { AttendanceManagement } from './app/AttendanceManagement';
 import { BranchesPage } from './app/BranchesPage';
 import { FinanceDashboard } from './app/FinanceDashboard';
 import { FeeManagement } from './app/FeeManagement';
@@ -126,6 +127,12 @@ function App() {
           <Route path="/settings" element={
             <AuthGuard>
               <MainLayout><SettingsPage /></MainLayout>
+            </AuthGuard>
+          } />
+
+          <Route path="/attendance" element={
+            <AuthGuard>
+              <MainLayout><AttendanceManagement /></MainLayout>
             </AuthGuard>
           } />
 

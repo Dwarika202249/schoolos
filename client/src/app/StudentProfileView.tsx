@@ -35,15 +35,20 @@ export const StudentProfileView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState<any>(null);
+  const [attendanceStats, setAttendanceStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('overview');
 
   useEffect(() => {
-    const fetchStudent = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await api.get(`/students/${id}`);
-        setStudent(response.data.data);
+        const [sRes, aRes] = await Promise.all([
+          api.get(`/students/${id}`),
+          api.get('/tenant/attendance/stats', { params: { studentId: id } })
+        ]);
+        setStudent(sRes.data.data);
+        setAttendanceStats(aRes.data.data);
       } catch (error) {
         toast.error('Failed to load intelligence profile.');
         navigate('/students');
@@ -51,7 +56,7 @@ export const StudentProfileView = () => {
         setLoading(false);
       }
     };
-    fetchStudent();
+    fetchData();
   }, [id, navigate]);
 
   const handleToggleStatus = async () => {
@@ -186,8 +191,19 @@ export const StudentProfileView = () => {
              </div>
              <div className="p-4 bg-white/5 border border-white/10 rounded-2xl border-l-emerald-500 border-l-2">
                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Attendance Index</p>
-                 <p className="text-lg font-black text-emerald-500 tracking-tight mt-1">94.2%</p>
-                 <p className="text-[10px] font-bold text-slate-400 italic mt-0.5">Optimal</p>
+                 {(() => {
+                    const stats = attendanceStats || { PRESENT: 0, ABSENT: 0, LATE: 0, EXCUSED: 0 };
+                    const total = stats.PRESENT + stats.ABSENT + stats.LATE + stats.EXCUSED;
+                    const percent = total > 0 ? ((stats.PRESENT + stats.LATE) / total * 100).toFixed(1) : 'N/A';
+                    return (
+                      <>
+                        <p className="text-lg font-black text-emerald-500 tracking-tight mt-1">{percent}{total > 0 ? '%' : ''}</p>
+                        <p className="text-[10px] font-bold text-slate-400 italic mt-0.5">
+                          {total > 0 ? (Number(percent) > 75 ? 'Optimal' : 'Low Attendance') : 'No Data'}
+                        </p>
+                      </>
+                    );
+                 })()}
              </div>
              <div className="p-4 bg-white/5 border border-white/10 rounded-2xl border-l-primary border-l-2 col-span-2">
                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Assigned Sector</p>
@@ -306,34 +322,39 @@ export const StudentProfileView = () => {
                  </div>
               )}
 
-              {/* TAB: ATTENDANCE MOCK */}
+              {/* TAB: ATTENDANCE */}
               {activeTab === 'attendance' && (
                  <div className="space-y-6">
-                    <Card className="p-8 border-emerald-500/20 shadow-2xl shadow-black/40 bg-emerald-500/5 rounded-[3rem] text-center relative">
-                       <Activity className="w-16 h-16 text-emerald-500/50 mx-auto mb-6" />
-                       <h2 className="text-2xl font-black text-emerald-400 uppercase tracking-widest italic drop-shadow-md">Chronos Tracker Online</h2>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        {[
+                          { label: 'Present', val: attendanceStats?.PRESENT || 0, color: 'text-emerald-400', icon: CheckCircle2 },
+                          { label: 'Absent', val: attendanceStats?.ABSENT || 0, color: 'text-rose-400', icon: XCircle },
+                          { label: 'Late', val: attendanceStats?.LATE || 0, color: 'text-amber-400', icon: Clock },
+                          { label: 'Excused', val: attendanceStats?.EXCUSED || 0, color: 'text-indigo-400', icon: ShieldCheck },
+                        ].map((s, i) => (
+                           <Card key={i} className="p-6 border-white/10 bg-white/5 rounded-3xl text-center">
+                              <s.icon className={`w-6 h-6 mx-auto mb-2 ${s.color}`} />
+                              <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">{s.label}</p>
+                              <p className={`text-2xl font-black ${s.color}`}>{s.val}</p>
+                           </Card>
+                        ))}
+                    </div>
+
+                    <Card className="p-8 border-emerald-500/20 shadow-2xl shadow-black/40 bg-emerald-500/5 rounded-[3rem] text-center relative overflow-hidden group">
+                       <Activity className="w-16 h-16 text-emerald-500/50 mx-auto mb-6 group-hover:scale-110 transition-transform" />
+                       <h2 className="text-2xl font-black text-emerald-400 uppercase tracking-widest italic drop-shadow-md">Chronos Tracker Metrics</h2>
                        <p className="text-emerald-500/80 font-medium max-w-lg mx-auto mt-4 leading-relaxed">
-                           Overall aggregate indicates optimal presence. Connecting to bio-metric/RFID gateway for daily visual maps.
+                           Detailed historical presence logs synced from classroom registers. High attendance index directly correlates with academic stability.
                        </p>
                        
-                       {/* Mock Grid */}
-                       <div className="mt-10 max-w-xl mx-auto bg-black/40 p-6 rounded-3xl border border-white/5">
-                           <div className="flex gap-2 justify-center flex-wrap">
-                               {[...Array(30)].map((_, i) => (
-                                  <div 
-                                      key={i} 
-                                      className={`w-6 h-6 rounded-md ${
-                                          i === 14 || i === 22 
-                                              ? 'bg-rose-500/20 border border-rose-500/50' 
-                                              : (i > 25 && i < 28) ? 'bg-amber-500/20 border border-amber-500/50' : 'bg-emerald-500/20 border border-emerald-500/50'
-                                      }`}
-                                  />
-                               ))}
-                           </div>
-                           <div className="flex justify-between items-center mt-6 text-[10px] font-black uppercase text-slate-500 tracking-widest">
-                               <span>Start of Cycle</span>
-                               <span>Present Day</span>
-                           </div>
+                       <div className="mt-8 flex gap-3 justify-center">
+                          <div className="px-6 py-3 rounded-2xl bg-black/40 border border-emerald-500/20 text-emerald-400 font-bold text-sm">
+                             Current Score: {(() => {
+                                const stats = attendanceStats || { PRESENT: 0, ABSENT: 0, LATE: 0, EXCUSED: 0 };
+                                const total = stats.PRESENT + stats.ABSENT + stats.LATE + stats.EXCUSED;
+                                return total > 0 ? ((stats.PRESENT + stats.LATE) / total * 100).toFixed(1) : 0;
+                             })()}%
+                          </div>
                        </div>
                     </Card>
                  </div>

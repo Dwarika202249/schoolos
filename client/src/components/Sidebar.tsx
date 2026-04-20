@@ -19,6 +19,7 @@ const getNavigation = (role: string) => {
   const base = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Students', href: '/students', icon: Users },
+    { name: 'Attendance', href: '/attendance', icon: CalendarDays },
   ];
 
   if (role === 'OWNER' || role === 'ADMIN') {

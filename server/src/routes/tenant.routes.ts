@@ -6,6 +6,7 @@ import { TenantController } from '../controllers/tenant.controller';
 import { FinanceController } from '../controllers/finance.controller';
 import { StaffController } from '../controllers/staff.controller';
 import { SubjectController } from '../controllers/subject.controller';
+import { AttendanceController } from '../controllers/attendance.controller';
 import { requireOwner, requireAdmin, requireAnyStaff } from '../middleware/rbac.middleware';
 
 const router = Router();
@@ -70,5 +71,10 @@ router.patch('/finance/payroll/config/:staffId', requireOwner, FinanceController
 router.post('/finance/payroll/process', requireOwner, FinanceController.processPayroll);
 router.get('/finance/payroll', requireAdmin, FinanceController.getPayrolls);
 router.post('/finance/payroll/payout', requireOwner, FinanceController.payoutPayroll);
+
+// ─── Attendance Routes ────────────────────────────────────────────────────────
+router.get('/attendance/sheet', requireAnyStaff, AttendanceController.getAttendanceSheet);
+router.post('/attendance/mark', requireAnyStaff, AttendanceController.markAttendance);
+router.get('/attendance/stats', requireAnyStaff, AttendanceController.getStudentStats);
 
 export default router;

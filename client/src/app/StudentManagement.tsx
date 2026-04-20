@@ -18,7 +18,8 @@ import {
     CheckCircle2,
     XCircle,
     Clock,
-    IndianRupee
+    IndianRupee,
+    FileSpreadsheet
 } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -56,22 +57,46 @@ export const StudentManagement = () => {
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
     const [activeFilter, setActiveFilter] = useState('ALL');
+
+    // Pagination State
+    const [page, setPage] = useState(1);
+    const [limit] = useState(10);
+    const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
 
     // Bulk Promote Dialog State
     const [showPromoteDialog, setShowPromoteDialog] = useState(false);
     const [promoteConfirmText, setPromoteConfirmText] = useState('');
 
+    // Debounce search term
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            setPage(1); // Reset to page 1 on search
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    // Fetch students when filters, page or search changes
     useEffect(() => {
         fetchStudents();
-    }, []);
+    }, [page, debouncedSearch, activeFilter]);
 
     const fetchStudents = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/students');
-            setStudents(res.data.data);
+            const res = await api.get('/students', {
+                params: {
+                    page,
+                    limit,
+                    search: debouncedSearch,
+                    status: activeFilter === 'ALL' ? undefined : activeFilter
+                }
+            });
+            setStudents(res.data.data.students);
+            setMeta(res.data.data.meta);
         } catch (error) {
             toast.error('Failed to load students');
         } finally {
@@ -98,20 +123,6 @@ export const StudentManagement = () => {
         setPromoteConfirmText('');
     };
 
-    // Filter Logic
-    const filteredStudents = students.filter(student => {
-        const matchesSearch =
-            student.admissionNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (student.userId?.firstName + ' ' + student.userId?.lastName).toLowerCase().includes(searchTerm.toLowerCase()) ||
-            student.guardians.some(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
-
-        if (!matchesSearch) return false;
-        if (activeFilter === 'ACTIVE' && student.status !== 'ACTIVE') return false;
-        if (activeFilter === 'INACTIVE' && student.status !== 'INACTIVE') return false;
-        // Add logic for taxonomy filters if needed later
-        return true;
-    });
-
     // Calculate generic simulated taxonomy states since attendance/finance isn't fully linked yet
     const getTaxonomyStates = (student: Student, index: number) => {
         const isNew = new Date(student.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -122,7 +133,56 @@ export const StudentManagement = () => {
         return { isNew, isDefaulter, lowAttendance };
     };
 
-    if (loading) {
+    const PaginationControls = () => {
+        if (meta.totalPages <= 1) return null;
+
+        return (
+            <div className="flex items-center justify-between px-8 py-6 border-t border-white/5 bg-white/5 mt-4 rounded-b-[3rem]">
+                <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                    Showing {(page - 1) * limit + 1} to {Math.min(page * limit, meta.total)} of {meta.total} Students
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        disabled={page === 1}
+                        onClick={() => setPage(p => p - 1)}
+                        className="h-10 px-4 rounded-xl border-white/10 text-[10px] font-black uppercase tracking-widest hover:border-primary/50 disabled:opacity-30"
+                    >
+                        Previous
+                    </Button>
+                    <div className="flex items-center gap-1 mx-4">
+                        {[...Array(meta.totalPages)].map((_, i) => {
+                            const pNum = i + 1;
+                            // Only show current, first, last, and neighbors
+                            if (pNum === 1 || pNum === meta.totalPages || (pNum >= page - 1 && pNum <= page + 1)) {
+                                return (
+                                    <button
+                                        key={pNum}
+                                        onClick={() => setPage(pNum)}
+                                        className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all ${page === pNum ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+                                    >
+                                        {pNum}
+                                    </button>
+                                );
+                            }
+                            if (pNum === page - 2 || pNum === page + 2) return <span key={pNum} className="text-slate-700">...</span>;
+                            return null;
+                        })}
+                    </div>
+                    <Button
+                        variant="outline"
+                        disabled={page === meta.totalPages}
+                        onClick={() => setPage(p => p + 1)}
+                        className="h-10 px-4 rounded-xl border-white/10 text-[10px] font-black uppercase tracking-widest hover:border-primary/50 disabled:opacity-30"
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
+        );
+    };
+
+    if (loading && students.length === 0) {
         return (
             <div className="p-10 space-y-8 animate-pulse opacity-50">
                 <div className="h-10 w-48 bg-white/10 rounded-xl" />
@@ -178,7 +238,7 @@ export const StudentManagement = () => {
                     <div className="flex items-start justify-between relative z-10">
                         <div className="space-y-2">
                             <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Total Strength</p>
-                            <p className="text-5xl font-black text-foreground tracking-tighter">{students.length}</p>
+                            <p className="text-5xl font-black text-foreground tracking-tighter">{meta.total}</p>
                             <div className="flex items-center gap-2 text-emerald-500 bg-emerald-500/10 w-fit px-2 py-1 rounded-lg border border-emerald-500/20">
                                 <ArrowUpRight className="w-3 h-3" />
                                 <span className="text-[10px] font-black uppercase tracking-widest">+12 New</span>
@@ -243,8 +303,12 @@ export const StudentManagement = () => {
                 </div>
 
                 <div className="flex gap-4">
-                    <Button variant="outline" className="h-16 px-8 rounded-2xl border-white/20 bg-white/5 font-black uppercase text-[10px] tracking-widest hover:border-primary/50">
-                        <Filter className="w-4 h-4 mr-2" /> FIlters
+                    <Button
+                        variant="outline"
+                        className="h-16 px-8 rounded-2xl border-white/20 bg-white/5 font-black uppercase text-[10px] tracking-widest hover:border-primary/50"
+                        onClick={() => navigate('/students/import')}
+                    >
+                        <FileSpreadsheet className="w-4 h-4 mr-2" /> Bulk Import
                     </Button>
                     <Button
                         variant="outline"
@@ -258,145 +322,153 @@ export const StudentManagement = () => {
 
             {/* Main Data View */}
             {viewMode === 'list' && (
-                <Card className="p-2 border-white/20 shadow-2xl shadow-black/80 bg-card/40 backdrop-blur-2xl rounded-[3rem] overflow-hidden">
-                    <div className="overflow-x-auto min-h-[500px]">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="border-b border-white/10 bg-white/5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                                    <th className="p-6 pl-8 rounded-tl-[2rem]">Identity & ID</th>
-                                    <th className="p-6">Taxonomy / Status</th>
-                                    <th className="p-6">Class Sector</th>
-                                    <th className="p-6">Primary Guardian</th>
-                                    <th className="p-6 text-right rounded-tr-[2rem]">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                                {filteredStudents.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={5} className="py-20 text-center">
-                                            <AlertTriangle className="w-10 h-10 text-slate-500 mx-auto mb-4" />
-                                            <p className="text-slate-500 uppercase font-black text-xs tracking-widest">No matching records found.</p>
-                                        </td>
+                <div className="space-y-4">
+                    <Card className="p-2 border-white/20 shadow-2xl shadow-black/80 bg-card/40 backdrop-blur-2xl rounded-[3rem] overflow-hidden">
+                        <div className="overflow-x-auto min-h-[500px]">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="border-b border-white/10 bg-white/5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                                        <th className="p-6 pl-8 rounded-tl-[2rem]">Identity & ID</th>
+                                        <th className="p-6">Taxonomy / Status</th>
+                                        <th className="p-6">Class Sector</th>
+                                        <th className="p-6">Primary Guardian</th>
+                                        <th className="p-6 text-right rounded-tr-[2rem]">Actions</th>
                                     </tr>
-                                ) : (
-                                    filteredStudents.map((student, i) => {
-                                        const { isNew, isDefaulter, lowAttendance } = getTaxonomyStates(student, i);
-                                        const primaryGuardian = student.guardians.find(g => g.isEmergencyContact) || student.guardians[0];
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {students.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={5} className="py-20 text-center">
+                                                <AlertTriangle className="w-10 h-10 text-slate-500 mx-auto mb-4" />
+                                                <p className="text-slate-500 uppercase font-black text-xs tracking-widest">No matching records found.</p>
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        students.map((student, i) => {
+                                            const { isNew, isDefaulter, lowAttendance } = getTaxonomyStates(student, i);
+                                            const primaryGuardian = student.guardians.find(g => g.isEmergencyContact) || student.guardians[0];
 
-                                        return (
-                                            <tr key={student._id || (student as any).id || i} className="group hover:bg-white/5 transition-all cursor-pointer" onClick={() => navigate(`/students/${student._id || (student as any).id}`)}>
-                                                <td className="p-6 pl-8">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black shadow-inner">
-                                                            {student.userId?.firstName?.charAt(0) || 'U'}
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-bold text-foreground text-base">{student.userId?.firstName} {student.userId?.lastName}</p>
-                                                            <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">{student.admissionNumber}</p>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="p-6 space-y-2">
-                                                    <div className="flex flex-wrap gap-2">
-                                                        <span className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border ${student.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-slate-400 border-white/10'}`}>
-                                                            {student.status}
-                                                        </span>
-                                                        {isNew && <span className="px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-indigo-500/20 bg-indigo-500/10 text-indigo-400">NEW ADMISSION</span>}
-                                                        {isDefaulter && <span className="px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-rose-500/20 bg-rose-500/10 text-rose-400 flex items-center gap-1"><CircleDollarSign className="w-3 h-3" /> DEFAULTER</span>}
-                                                        {lowAttendance && <span className="px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-amber-500/20 bg-amber-500/10 text-amber-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> LOW ATTENDANCE</span>}
-                                                    </div>
-                                                </td>
-                                                <td className="p-6">
-                                                    {student.classId ? (
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-black text-slate-300">
-                                                                {student.classId.displayName || `${student.classId.grade} - ${student.classId.section}`}
+                                            return (
+                                                <tr key={student._id || (student as any).id || i} className="group hover:bg-white/5 transition-all cursor-pointer" onClick={() => navigate(`/students/${student._id || (student as any).id}`)}>
+                                                    <td className="p-6 pl-8">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black shadow-inner">
+                                                                {student.userId?.firstName?.charAt(0) || 'U'}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-bold text-foreground text-base">{student.userId?.firstName} {student.userId?.lastName}</p>
+                                                                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">{student.admissionNumber}</p>
                                                             </div>
                                                         </div>
-                                                    ) : (
-                                                        <span className="text-slate-500 italic text-xs font-bold">Unassigned</span>
-                                                    )}
-                                                </td>
-                                                <td className="p-6">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-slate-400">
-                                                            <Users className="w-4 h-4" />
+                                                    </td>
+                                                    <td className="p-6 space-y-2">
+                                                        <div className="flex flex-wrap gap-2">
+                                                            <span className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border ${student.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-slate-400 border-white/10'}`}>
+                                                                {student.status}
+                                                            </span>
+                                                            {isNew && <span className="px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-indigo-500/20 bg-indigo-500/10 text-indigo-400">NEW ADMISSION</span>}
+                                                            {isDefaulter && <span className="px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-rose-500/20 bg-rose-500/10 text-rose-400 flex items-center gap-1"><CircleDollarSign className="w-3 h-3" /> DEFAULTER</span>}
+                                                            {lowAttendance && <span className="px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border border-amber-500/20 bg-amber-500/10 text-amber-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> LOW ATTENDANCE</span>}
                                                         </div>
-                                                        <div>
-                                                            <p className="text-sm font-bold text-slate-300">{primaryGuardian?.name || 'Unknown'}</p>
-                                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{primaryGuardian?.phone || 'No Data'}</p>
+                                                    </td>
+                                                    <td className="p-6">
+                                                        {student.classId ? (
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-black text-slate-300">
+                                                                    {student.classId.displayName || `${student.classId.grade} - ${student.classId.section}`}
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-slate-500 italic text-xs font-bold">Unassigned</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-6">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-slate-400">
+                                                                <Users className="w-4 h-4" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-bold text-slate-300">{primaryGuardian?.name || 'Unknown'}</p>
+                                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{primaryGuardian?.phone || 'No Data'}</p>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </td>
-                                                <td className="p-6 text-right">
-                                                    <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
-                                                        <button className="p-2 bg-white/5 hover:bg-primary hover:text-white rounded-lg transition-colors border border-white/5 tooltip group/btn relative" title="Dispatch SMS">
-                                                            <MessageSquare className="w-4 h-4" />
-                                                        </button>
-                                                        <button className="p-2 bg-white/5 hover:bg-rose-500 hover:text-white rounded-lg transition-colors border border-white/5 group/btn relative" title="Collect Fee">
-                                                            <IndianRupee className="w-4 h-4" />
-                                                        </button>
-                                                        <div className="w-[1px] h-4 bg-white/10 mx-1" />
-                                                        <button title="More Options" className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors border border-white/5 text-slate-400">
-                                                            <MoreVertical className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </Card>
+                                                    </td>
+                                                    <td className="p-6 text-right">
+                                                        <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
+                                                            <button className="p-2 bg-white/5 hover:bg-primary hover:text-white rounded-lg transition-colors border border-white/5 tooltip group/btn relative" title="Dispatch SMS">
+                                                                <MessageSquare className="w-4 h-4" />
+                                                            </button>
+                                                            <button className="p-2 bg-white/5 hover:bg-rose-500 hover:text-white rounded-lg transition-colors border border-white/5 group/btn relative" title="Collect Fee">
+                                                                <IndianRupee className="w-4 h-4" />
+                                                            </button>
+                                                            <div className="w-[1px] h-4 bg-white/10 mx-1" />
+                                                            <button title="More Options" className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors border border-white/5 text-slate-400">
+                                                                <MoreVertical className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        <PaginationControls />
+                    </Card>
+                </div>
             )}
 
             {/* Grid View */}
             {viewMode === 'grid' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                    {filteredStudents.length === 0 ? (
-                        <div className="col-span-full py-20 text-center bg-card/20 rounded-[3rem] border-2 border-dashed border-white/10">
-                            <AlertTriangle className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                            <p className="text-slate-500 uppercase font-black text-xs tracking-widest">No intelligence found in database.</p>
-                        </div>
-                    ) : (
-                        filteredStudents.map((student, i) => {
-                            const { isNew, isDefaulter, lowAttendance } = getTaxonomyStates(student, i);
-                            return (
-                                <Card key={student._id || (student as any).id || i} className="p-8 border-white/20 shadow-2xl shadow-black/60 bg-card/40 backdrop-blur-xl rounded-[2.5rem] group hover:border-primary/40 transition-all duration-500 relative cursor-pointer flex flex-col justify-between min-h-[300px]" onClick={() => navigate(`/students/${student._id || (student as any).id}`)}>
-                                    <div className="absolute top-0 right-0 p-6">
-                                        <div className={`w-3 h-3 rounded-full shadow-[0_0_10px] ${student.status === 'ACTIVE' ? 'bg-emerald-500 shadow-emerald-500' : 'bg-rose-500 shadow-rose-500'}`} />
-                                    </div>
-
-                                    <div>
-                                        <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black shadow-inner text-2xl mb-6">
-                                            {student.userId?.firstName?.charAt(0) || 'U'}
+                <div className="space-y-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                        {students.length === 0 ? (
+                            <div className="col-span-full py-20 text-center bg-card/20 rounded-[3rem] border-2 border-dashed border-white/10">
+                                <AlertTriangle className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+                                <p className="text-slate-500 uppercase font-black text-xs tracking-widest">No intelligence found in database.</p>
+                            </div>
+                        ) : (
+                            students.map((student, i) => {
+                                const { isNew, isDefaulter, lowAttendance } = getTaxonomyStates(student, i);
+                                return (
+                                    <Card key={student._id || (student as any).id || i} className="p-8 border-white/20 shadow-2xl shadow-black/60 bg-card/40 backdrop-blur-xl rounded-[2.5rem] group hover:border-primary/40 transition-all duration-500 relative cursor-pointer flex flex-col justify-between min-h-[300px]" onClick={() => navigate(`/students/${student._id || (student as any).id}`)}>
+                                        <div className="absolute top-0 right-0 p-6">
+                                            <div className={`w-3 h-3 rounded-full shadow-[0_0_10px] ${student.status === 'ACTIVE' ? 'bg-emerald-500 shadow-emerald-500' : 'bg-rose-500 shadow-rose-500'}`} />
                                         </div>
-                                        <h3 className="text-2xl font-black text-foreground group-hover:text-primary transition-colors tracking-tight">
-                                            {student.userId?.firstName} {student.userId?.lastName}
-                                        </h3>
-                                        <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mt-1">{student.admissionNumber}</p>
 
-                                        <div className="mt-4 flex flex-wrap gap-2">
-                                            {isDefaulter && <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-rose-500/20 bg-rose-500/10 text-rose-400">Fee Alert</span>}
-                                            {lowAttendance && <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-amber-500/20 bg-amber-500/10 text-amber-400">At-Risk</span>}
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-6 mt-6 border-t border-white/5 flex items-center justify-between">
                                         <div>
-                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Assigned Zone</p>
-                                            <p className="font-bold text-slate-300 text-sm">{student.classId?.displayName || 'Pending Assignment'}</p>
+                                            <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black shadow-inner text-2xl mb-6">
+                                                {student.userId?.firstName?.charAt(0) || 'U'}
+                                            </div>
+                                            <h3 className="text-2xl font-black text-foreground group-hover:text-primary transition-colors tracking-tight">
+                                                {student.userId?.firstName} {student.userId?.lastName}
+                                            </h3>
+                                            <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mt-1">{student.admissionNumber}</p>
+
+                                            <div className="mt-4 flex flex-wrap gap-2">
+                                                {isDefaulter && <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-rose-500/20 bg-rose-500/10 text-rose-400">Fee Alert</span>}
+                                                {lowAttendance && <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-amber-500/20 bg-amber-500/10 text-amber-400">At-Risk</span>}
+                                            </div>
                                         </div>
-                                        <div className="w-10 h-10 bg-white/5 text-slate-400 rounded-xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-inner border border-white/5">
-                                            <ChevronRight className="w-5 h-5" />
+
+                                        <div className="pt-6 mt-6 border-t border-white/5 flex items-center justify-between">
+                                            <div>
+                                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Assigned Zone</p>
+                                                <p className="font-bold text-slate-300 text-sm">{student.classId?.displayName || 'Pending Assignment'}</p>
+                                            </div>
+                                            <div className="w-10 h-10 bg-white/5 text-slate-400 rounded-xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-inner border border-white/5">
+                                                <ChevronRight className="w-5 h-5" />
+                                            </div>
                                         </div>
-                                    </div>
-                                </Card>
-                            );
-                        })
-                    )}
+                                    </Card>
+                                );
+                            })
+                        )}
+                    </div>
+                    <Card className="border-white/10 bg-card/40 backdrop-blur-xl rounded-[2.5rem] overflow-hidden">
+                        <PaginationControls />
+                    </Card>
                 </div>
             )}
 

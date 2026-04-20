@@ -20,6 +20,7 @@ import { AboutPage } from './app/About';
 import { Dashboard } from './app/Dashboard';
 import { StudentManagement } from './app/StudentManagement';
 import { StudentEnrollment } from './app/StudentEnrollment';
+import { StudentBulkImport } from './app/StudentBulkImport';
 import { StudentProfileView } from './app/StudentProfileView';
 import { StudentEdit } from './app/StudentEdit';
 import { AcademicConfig } from './app/AcademicConfig';
@@ -66,6 +67,17 @@ function App() {
           <Route path="/students/enroll" element={
             <AuthGuard>
               <MainLayout><StudentEnrollment /></MainLayout>
+            </AuthGuard>
+          } />
+
+          <Route path="/students/import" element={
+            <AuthGuard>
+              <MainLayout>
+                <StudentBulkImport 
+                  onClose={() => window.history.back()} 
+                  onComplete={() => window.location.href = '/students'} 
+                />
+              </MainLayout>
             </AuthGuard>
           } />
           

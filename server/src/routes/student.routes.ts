@@ -7,6 +7,8 @@ const router = Router();
 // Docs RBAC: POST = OWNER/ADMIN, GET = OWNER/ADMIN/TEACHER
 router.post('/enroll', requireAdmin, StudentController.enroll);
 router.get('/', requireTeacher, StudentController.list);
+router.post('/bulk-import', requireAdmin, StudentController.bulkImport);
+router.post('/:id/resend-activation', requireAdmin, StudentController.resendActivationLink);
 router.get('/:id', requireTeacher, StudentController.getById);
 router.patch('/:id', requireAdmin, StudentController.update);
 

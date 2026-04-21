@@ -48,9 +48,9 @@ export const AttendanceManagement = () => {
         // ── Teacher Filter ──────────────────────────────────────────
         // If the user is a TEACHER, show only their assigned class
         // A class is theirs if classTeacherId === their staffProfileId
-        if (isTeacher && user?.staffProfileId) {
+        if (isTeacher) {
           const myClasses = allClasses.filter(
-            (c: any) => (c.classTeacherId === user.staffProfileId)
+            (c: any) => (c.classTeacherId === (user?.id || user?._id))
           );
           allClasses = myClasses;
         }

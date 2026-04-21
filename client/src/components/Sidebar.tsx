@@ -24,7 +24,7 @@ const getNavigation = (role: string) => {
     { name: 'Exams & Grades', href: '/exams', icon: GraduationCap },
   ];
 
-  if (role === 'OWNER' || role === 'ADMIN') {
+    if (role === 'OWNER' || role === 'ADMIN') {
     base.push(
       { name: 'Staff', href: '/staff', icon: Users },
       { name: 'Academic', href: '/academic', icon: BookOpen },

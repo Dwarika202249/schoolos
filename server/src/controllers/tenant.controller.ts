@@ -33,6 +33,7 @@ export class TenantController {
         boardAffiliation,
         mediumOfInstruction,
         academicYearStartMonth,
+        configuration,
       } = req.body;
 
       // 1. Update the School document
@@ -49,6 +50,7 @@ export class TenantController {
             boardAffiliation,
             mediumOfInstruction,
             academicYearStartMonth,
+            configuration,
           },
         },
         { new: true, runValidators: true },

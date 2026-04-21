@@ -8,6 +8,7 @@ import { StaffController } from '../controllers/staff.controller';
 import { SubjectController } from '../controllers/subject.controller';
 import { AttendanceController } from '../controllers/attendance.controller';
 import { ExamController } from '../controllers/exam.controller';
+import { TimetableController } from '../controllers/timetable.controller';
 import { requireOwner, requireAdmin, requireAnyStaff } from '../middleware/rbac.middleware';
 
 const router = Router();
@@ -53,6 +54,10 @@ router.get('/staff', requireAdmin, StaffController.getStaffList);
 router.get('/staff/:id', requireAdmin, StaffController.getStaffDetails);
 router.patch('/staff/:id', requireAdmin, StaffController.updateStaff);
 
+// Staff Attendance
+router.get('/staff-attendance/sheet', requireAdmin, StaffController.getAttendanceSheet);
+router.post('/staff-attendance/mark', requireAdmin, StaffController.markAttendance);
+
 // ─── Finance Roles ────────────────────────────────────────────────────────────
 // Fee Management
 router.post('/finance/categories', requireOwner, FinanceController.createCategory);
@@ -97,6 +102,17 @@ router.delete('/exams/schedules/:id', requireAdmin, ExamController.deleteSchedul
 
 router.get('/exams/marking-sheet/:scheduleId', requireAnyStaff, ExamController.getMarkingSheet);
 router.post('/exams/bulk-update-marks', requireAnyStaff, ExamController.bulkUpdateMarks);
+
+// --- Timetable & Substitution Routes ---
+router.get('/timetable/class/:classId', requireAnyStaff, TimetableController.getClassSchedule);
+router.get('/timetable/teacher/:userId', requireAnyStaff, TimetableController.getTeacherMasterSchedule);
+router.post('/timetable/upsert', requireAdmin, TimetableController.upsertTimetableSlot);
+router.get('/timetable/my-schedule', requireAnyStaff, TimetableController.getMyScheduleToday);
+
+router.get('/substitution/ledger', requireAdmin, TimetableController.getDailyLedger);
+router.get('/substitution/available-teachers', requireAdmin, TimetableController.getAvailableTeachers);
+router.post('/substitution/assign', requireAdmin, TimetableController.assignSubstitution);
+
 router.get('/exams/student-report/:studentId', requireAnyStaff, ExamController.getStudentReport);
 
 router.post('/exams/grade-system/seed', requireAdmin, ExamController.seedDefaultGrades);

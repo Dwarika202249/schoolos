@@ -10,6 +10,7 @@ import {
   BadgeCheck,
   Building2,
   Calendar,
+  CalendarDays,
   ChevronRight,
   Users,
   AlertCircle,
@@ -105,6 +106,12 @@ export const StaffManagement = () => {
           >
             <ListIcon className="w-5 h-5" />
           </button>
+          <Link to="/staff/attendance">
+            <Button variant="outline" className="rounded-xl px-6 h-11 border-white/10 hover:bg-white/5 font-bold">
+              <CalendarDays className="w-4 h-4 mr-2" />
+              Attendance
+            </Button>
+          </Link>
           <div className="w-[1px] h-8 bg-white/10 mx-1" />
           <Link to="/staff/add">
             <Button className="rounded-xl px-6 h-11 shadow-lg shadow-primary/10">

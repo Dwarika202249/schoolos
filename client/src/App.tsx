@@ -37,6 +37,7 @@ import { FinanceDashboard } from './app/FinanceDashboard';
 import { FeeManagement } from './app/FeeManagement';
 import { PayrollDashboard } from './app/PayrollDashboard';
 import { InvoicesPage } from './app/InvoicesPage';
+import { StaffAttendancePage } from './app/StaffAttendancePage';
 
 function App() {
   return (
@@ -123,6 +124,12 @@ function App() {
           <Route path="/staff/edit/:id" element={
             <AuthGuard>
               <MainLayout><StaffEdit /></MainLayout>
+            </AuthGuard>
+          } />
+
+          <Route path="/staff/attendance" element={
+            <AuthGuard>
+              <MainLayout><StaffAttendancePage /></MainLayout>
             </AuthGuard>
           } />
 

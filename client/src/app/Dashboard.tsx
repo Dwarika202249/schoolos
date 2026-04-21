@@ -19,6 +19,7 @@ import { Card } from '../components/ui/Card';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../hooks/useAuth';
+import { TeacherDashboard } from './TeacherDashboard';
 
 interface DashboardStats {
   students: { total: number; active: number; inactive: number };
@@ -140,6 +141,10 @@ export const Dashboard = () => {
       badge: <Link to="/students" className="text-slate-400 font-bold text-xs flex items-center gap-1 hover:text-white transition-colors"><Users className="w-3 h-3" /> View Roster</Link>
     },
   ] : [];
+
+  if (user?.role === 'TEACHER') {
+    return <TeacherDashboard />;
+  }
 
   return (
     <div className="p-6 lg:p-10 max-w-[1600px] mx-auto space-y-10 animate-in fade-in duration-700">

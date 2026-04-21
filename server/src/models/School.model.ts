@@ -49,6 +49,12 @@ export interface ISchool extends Document {
   ownerUserId: Types.ObjectId;
   registrationNumber?: string;
   affiliationNumber?: string;
+  configuration: {
+    timetable: {
+      workDays: number;
+      periodCount: number;
+    }
+  };
   isDeleted: boolean;
   deletedAt?: Date;
   createdAt: Date;
@@ -102,6 +108,12 @@ const schoolSchema = new Schema<ISchool>(
     ownerUserId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     registrationNumber: String,
     affiliationNumber: String,
+    configuration: {
+      timetable: {
+        workDays: { type: Number, default: 6, min: 1, max: 7 },
+        periodCount: { type: Number, default: 8, min: 1, max: 15 }
+      }
+    },
     isDeleted: { type: Boolean, default: false },
     deletedAt: Date,
   },

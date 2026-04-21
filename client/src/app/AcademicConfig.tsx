@@ -17,7 +17,10 @@ import { Input } from '../components/ui/Input';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import toast from 'react-hot-toast';
 
-type Tab = 'sessions' | 'grades' | 'subjects';
+import { TimetableManagement } from './TimetableManagement';
+import { SubstitutionLedger } from './SubstitutionLedger';
+
+type Tab = 'sessions' | 'grades' | 'subjects' | 'timetable' | 'ledger';
 
 export const AcademicConfig = () => {
   const [activeTab, setActiveTab] = useState<Tab>('sessions');
@@ -150,6 +153,8 @@ export const AcademicConfig = () => {
     { id: 'sessions', name: 'Academic Sessions', icon: Calendar },
     { id: 'grades', name: 'Grades & Sections', icon: Layers },
     { id: 'subjects', name: 'Subject Bank', icon: BookOpen },
+    { id: 'timetable', name: 'Master Timetables', icon: Calendar },
+    { id: 'ledger', name: 'Daily Adjustment', icon: Settings2 },
   ];
 
   if (loading) return null;
@@ -342,6 +347,28 @@ export const AcademicConfig = () => {
                 </div>
               ))}
             </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'timetable' && (
+          <motion.div
+            key="timetable"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <TimetableManagement />
+          </motion.div>
+        )}
+
+        {activeTab === 'ledger' && (
+          <motion.div
+            key="ledger"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <SubstitutionLedger />
           </motion.div>
         )}
       </AnimatePresence>

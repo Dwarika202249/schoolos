@@ -167,4 +167,75 @@ export class StaffController {
       next(error);
     }
   }
+  /**
+   * GET /staff-attendance/sheet?date=...
+   */
+  static async getAttendanceSheet(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { date } = req.query;
+      const schoolId = req.tenantId;
+
+      const queryDate = new Date(date as string);
+      queryDate.setUTCHours(0, 0, 0, 0);
+
+      // 1. Get all active staff
+      const staff = await StaffProfile.find({
+        schoolId,
+        isActive: true,
+        isDeleted: { $ne: true }
+      }).populate('userId', 'firstName lastName email role avatarUrl');
+
+      // 2. Get existing attendance for this date
+      const mongoose = require('mongoose');
+      const { StaffAttendance } = require('../models/StaffAttendance.model');
+      const attendance = await StaffAttendance.find({
+        schoolId: new mongoose.Types.ObjectId(schoolId as string),
+        date: queryDate
+      });
+
+      return ApiResponse.success(res, {
+        staff,
+        attendance
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /staff-attendance/mark
+   */
+  static async markAttendance(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { userId, date, status, checkIn, checkOut, note, branchId } = req.body;
+      const schoolId = req.tenantId;
+
+      const queryDate = new Date(date);
+      queryDate.setUTCHours(0, 0, 0, 0);
+
+      const mongoose = require('mongoose');
+      const { StaffAttendance } = require('../models/StaffAttendance.model');
+
+      const result = await StaffAttendance.findOneAndUpdate(
+        { 
+          schoolId: new mongoose.Types.ObjectId(schoolId as string), 
+          userId: new mongoose.Types.ObjectId(userId as string), 
+          date: queryDate 
+        },
+        {
+          branchId: new mongoose.Types.ObjectId(branchId as string),
+          status,
+          checkIn,
+          checkOut,
+          note,
+          updatedAt: new Date()
+        },
+        { upsert: true, new: true }
+      );
+
+      return ApiResponse.success(res, result, 'Staff attendance updated');
+    } catch (error) {
+      next(error);
+    }
+  }
 }

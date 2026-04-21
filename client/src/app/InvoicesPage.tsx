@@ -227,9 +227,8 @@ export const InvoicesPage = () => {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-              tab === t.key ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:text-foreground'
-            }`}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${tab === t.key ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:text-foreground'
+              }`}
           >
             <t.icon className="w-4 h-4" />
             {t.label}
@@ -669,6 +668,7 @@ export const InvoicesPage = () => {
                 <div className="relative">
                   <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
+                    title="Due Date"
                     type="date"
                     className="w-full bg-card border border-white/5 rounded-xl pl-12 pr-4 py-3 text-sm font-bold text-white outline-none focus:border-primary/50"
                     value={newInvoiceData.dueDate}

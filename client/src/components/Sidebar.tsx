@@ -11,7 +11,8 @@ import {
   Menu,
   X,
   LogOut,
-  Sparkles
+  Sparkles,
+  GraduationCap
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -20,6 +21,7 @@ const getNavigation = (role: string) => {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Students', href: '/students', icon: Users },
     { name: 'Attendance', href: '/attendance', icon: CalendarDays },
+    { name: 'Exams & Grades', href: '/exams', icon: GraduationCap },
   ];
 
   if (role === 'OWNER' || role === 'ADMIN') {

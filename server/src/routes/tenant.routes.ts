@@ -7,6 +7,7 @@ import { FinanceController } from '../controllers/finance.controller';
 import { StaffController } from '../controllers/staff.controller';
 import { SubjectController } from '../controllers/subject.controller';
 import { AttendanceController } from '../controllers/attendance.controller';
+import { ExamController } from '../controllers/exam.controller';
 import { requireOwner, requireAdmin, requireAnyStaff } from '../middleware/rbac.middleware';
 
 const router = Router();
@@ -82,5 +83,26 @@ router.post('/finance/payroll/payout', requireOwner, FinanceController.payoutPay
 router.get('/attendance/sheet', requireAnyStaff, AttendanceController.getAttendanceSheet);
 router.post('/attendance/mark', requireAnyStaff, AttendanceController.markAttendance);
 router.get('/attendance/stats', requireAnyStaff, AttendanceController.getStudentStats);
+
+// ─── Exam & Grade Routes ───────────────────────────────────────────────────────
+router.get('/exams/terms', requireAnyStaff, ExamController.listTerms);
+router.post('/exams/terms', requireAdmin, ExamController.createTerm);
+router.put('/exams/terms/:id', requireAdmin, ExamController.updateTerm);
+router.delete('/exams/terms/:id', requireAdmin, ExamController.deleteTerm);
+
+router.get('/exams/schedules', requireAnyStaff, ExamController.listSchedules);
+router.post('/exams/schedules', requireAdmin, ExamController.createSchedule);
+router.put('/exams/schedules/:id', requireAdmin, ExamController.updateSchedule);
+router.delete('/exams/schedules/:id', requireAdmin, ExamController.deleteSchedule);
+
+router.get('/exams/marking-sheet/:scheduleId', requireAnyStaff, ExamController.getMarkingSheet);
+router.post('/exams/bulk-update-marks', requireAnyStaff, ExamController.bulkUpdateMarks);
+router.get('/exams/student-report/:studentId', requireAnyStaff, ExamController.getStudentReport);
+
+router.post('/exams/grade-system/seed', requireAdmin, ExamController.seedDefaultGrades);
+router.get('/exams/grade-system', requireAdmin, ExamController.getGradeSystem);
+router.post('/exams/grade-system', requireAdmin, ExamController.createGrade);
+router.patch('/exams/grade-system/:id', requireAdmin, ExamController.updateGrade);
+router.delete('/exams/grade-system/:id', requireAdmin, ExamController.deleteGrade);
 
 export default router;

@@ -30,6 +30,8 @@ import { StaffEdit } from './app/StaffEdit';
 import { StaffProfileView } from './app/StaffProfileView';
 import { SettingsPage } from './app/SettingsPage';
 import { AttendanceManagement } from './app/AttendanceManagement';
+import { ExamManagement } from './app/ExamManagement';
+import { MarkEntry } from './app/MarkEntry';
 import { BranchesPage } from './app/BranchesPage';
 import { FinanceDashboard } from './app/FinanceDashboard';
 import { FeeManagement } from './app/FeeManagement';
@@ -133,6 +135,18 @@ function App() {
           <Route path="/attendance" element={
             <AuthGuard>
               <MainLayout><AttendanceManagement /></MainLayout>
+            </AuthGuard>
+          } />
+
+          <Route path="/exams" element={
+            <AuthGuard>
+              <MainLayout><ExamManagement /></MainLayout>
+            </AuthGuard>
+          } />
+
+          <Route path="/exams/marking/:scheduleId" element={
+            <AuthGuard>
+              <MainLayout><MarkEntry /></MainLayout>
             </AuthGuard>
           } />
 

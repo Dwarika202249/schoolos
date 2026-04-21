@@ -28,6 +28,7 @@ import { Button } from '../components/ui/Button';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { generateReportCard } from '../utils/reportCardGenerator';
 
 type Tab = 'overview' | 'academic' | 'attendance' | 'financial' | 'guardians';
 
@@ -36,19 +37,26 @@ export const StudentProfileView = () => {
   const navigate = useNavigate();
   const [student, setStudent] = useState<any>(null);
   const [attendanceStats, setAttendanceStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [examTerms, setExamTerms] = useState<any[]>([]);
+  const [selectedTermId, setSelectedTermId] = useState('');
+  const [examReport, setExamReport] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generatingReport, setGeneratingReport] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [sRes, aRes] = await Promise.all([
+        const [sRes, aRes, tRes] = await Promise.all([
           api.get(`/students/${id}`),
-          api.get('/tenant/attendance/stats', { params: { studentId: id } })
+          api.get('/tenant/attendance/stats', { params: { studentId: id } }),
+          api.get('/tenant/exams/terms')
         ]);
         setStudent(sRes.data.data);
         setAttendanceStats(aRes.data.data);
+        setExamTerms(tRes.data.data);
+        if (tRes.data.data.length > 0) setSelectedTermId(tRes.data.data[0]._id);
       } catch (error) {
         toast.error('Failed to load intelligence profile.');
         navigate('/students');
@@ -58,6 +66,41 @@ export const StudentProfileView = () => {
     };
     fetchData();
   }, [id, navigate]);
+
+  useEffect(() => {
+    if (activeTab === 'academic' && selectedTermId) {
+      const fetchReport = async () => {
+        try {
+          const res = await api.get(`/tenant/exams/student-report/${id}`, { params: { examTermId: selectedTermId } });
+          setExamReport(res.data.data);
+        } catch {
+          toast.error('Failed to fetch academic history');
+        }
+      };
+      fetchReport();
+    }
+  }, [activeTab, selectedTermId, id]);
+
+  const handleDownloadReportCard = async () => {
+    try {
+      setGeneratingReport(true);
+      const schoolRes = await api.get('/tenant/school');
+      const schoolData = schoolRes.data.data;
+      const termData = examTerms.find(t => t._id === selectedTermId);
+      
+      generateReportCard({
+        student,
+        school: schoolData,
+        term: termData,
+        results: examReport
+      });
+      toast.success('Report Card generated!');
+    } catch {
+      toast.error('Failed to generate PDF');
+    } finally {
+      setGeneratingReport(false);
+    }
+  };
 
   const handleToggleStatus = async () => {
     try {
@@ -303,22 +346,92 @@ export const StudentProfileView = () => {
                 </div>
               )}
 
-              {/* TAB: ACADEMIC MOCK */}
+              {/* TAB: ACADEMIC RADAR */}
               {activeTab === 'academic' && (
                  <div className="space-y-6">
-                    <Card className="p-12 border-dashed border-2 border-white/10 shadow-2xl shadow-black/40 bg-card/20 rounded-[3rem] text-center relative overflow-hidden group">
-                       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.05]" />
-                       <FileBarChart className="w-16 h-16 text-primary/50 mx-auto mb-6 group-hover:scale-110 transition-transform" />
-                       <h2 className="text-2xl font-black text-foreground uppercase tracking-widest italic drop-shadow-md">Academic Radar Standby</h2>
-                       <p className="text-slate-400 font-medium max-w-lg mx-auto mt-4 leading-relaxed">
-                           Waiting for Grading & Subject synchronization module to initiate. Historical exam scores, assignments, and neural progress reports will route here.
-                       </p>
-                       <div className="mt-8 flex gap-3 justify-center">
-                          <div className="w-3 h-3 bg-primary rounded-full animate-pulse" />
-                          <div className="w-3 h-3 bg-white/10 rounded-full" />
-                          <div className="w-3 h-3 bg-white/10 rounded-full" />
+                    {/* Filters & Actions */}
+                    <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-2">
+                       <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-5 py-3">
+                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Select Term:</span>
+                          <select 
+                            title="Filter by Term"
+                            className="bg-transparent border-none text-sm font-black outline-none text-primary"
+                            value={selectedTermId}
+                            onChange={e => setSelectedTermId(e.target.value)}
+                          >
+                            {examTerms.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+                          </select>
                        </div>
-                    </Card>
+                       
+                       <Button 
+                         onClick={handleDownloadReportCard}
+                         isLoading={generatingReport}
+                         disabled={examReport.length === 0}
+                         className="rounded-2xl h-14 px-8 font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/10 bg-emerald-500 hover:bg-emerald-600"
+                       >
+                          <FileBarChart className="w-4 h-4 mr-2" />
+                          Download Report Card
+                       </Button>
+                    </div>
+
+                    {examReport.length > 0 ? (
+                       <Card className="bg-card/40 backdrop-blur-xl border-white/10 rounded-[3rem] overflow-hidden">
+                          <table className="w-full text-left">
+                             <thead>
+                                <tr className="bg-white/5 border-b border-white/5">
+                                   <th className="px-8 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Subject</th>
+                                   <th className="px-8 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Max Marks</th>
+                                   <th className="px-8 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest text-center">Obtained</th>
+                                   <th className="px-8 py-4 text-[10px] font-black uppercase text-slate-500 tracking-widest text-right">Grade</th>
+                                </tr>
+                             </thead>
+                             <tbody className="divide-y divide-white/5">
+                                {examReport.map((res: any, i: number) => (
+                                   <tr key={i} className="group hover:bg-white/[0.02] transition-colors">
+                                      <td className="px-8 py-5">
+                                         <p className="font-bold text-slate-200">{res.subjectName}</p>
+                                         <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">{res.subjectCode}</p>
+                                      </td>
+                                      <td className="px-8 py-5 font-bold text-slate-400">{res.maxMarks}</td>
+                                      <td className="px-8 py-5 text-center">
+                                         <span className={`text-lg font-black ${res.obtainedMarks >= res.passingMarks ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                            {res.status === 'PRESENT' ? res.obtainedMarks : res.status}
+                                         </span>
+                                      </td>
+                                      <td className="px-8 py-5 text-right font-black text-primary">{res.grade || '—'}</td>
+                                   </tr>
+                                ))}
+                             </tbody>
+                          </table>
+                          <div className="p-8 bg-white/5 border-t border-white/5 flex justify-between items-center">
+                             <div>
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Overall Percentage</p>
+                                <p className="text-3xl font-black text-foreground">
+                                   {(() => {
+                                      const totalMax = examReport.reduce((s: number, r: any) => s + r.maxMarks, 0);
+                                      const totalObtained = examReport.reduce((s: number, r: any) => s + (r.obtainedMarks || 0), 0);
+                                      return totalMax > 0 ? Math.round((totalObtained / totalMax) * 100) : 0;
+                                   })()}%
+                                </p>
+                             </div>
+                             <div className="text-right">
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Final Standing</p>
+                                <p className={`text-xl font-black ${examReport.every((r: any) => (r.obtainedMarks || 0) >= r.passingMarks) ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                   {examReport.every((r: any) => (r.obtainedMarks || 0) >= r.passingMarks) ? 'PASS / PROMOTED' : 'DETAINED'}
+                                </p>
+                             </div>
+                          </div>
+                       </Card>
+                    ) : (
+                       <Card className="p-12 border-dashed border-2 border-white/10 shadow-2xl shadow-black/40 bg-card/20 rounded-[3rem] text-center relative overflow-hidden group">
+                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.05]" />
+                          <TrendingDown className="w-16 h-16 text-primary/50 mx-auto mb-6 group-hover:scale-110 transition-transform" />
+                          <h2 className="text-2xl font-black text-foreground uppercase tracking-widest italic drop-shadow-md">No Academic Signals</h2>
+                          <p className="text-slate-400 font-medium max-w-lg mx-auto mt-4 leading-relaxed">
+                              No results found for the selected examination term. Please check if marks have been synchronized by the subject teachers.
+                          </p>
+                       </Card>
+                    )}
                  </div>
               )}
 

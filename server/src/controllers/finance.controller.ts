@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import mongoose from "mongoose";
 import { FeeCategory } from "../models/FeeCategory.model";
 import { FeeStructure } from "../models/FeeStructure.model";
 import { Invoice, InvoiceStatus } from "../models/Invoice.model";
@@ -388,7 +389,8 @@ export class FinanceController {
 
   static async getStats(req: Request, res: Response, next: NextFunction) {
     try {
-      const schoolId = req.tenantId;
+      // Cast to ObjectId — aggregation $match does NOT auto-cast strings
+      const schoolId = new mongoose.Types.ObjectId(req.tenantId as string);
 
       const [income, outstanding, payroll] = await Promise.all([
         Transaction.aggregate([
@@ -410,6 +412,208 @@ export class FinanceController {
         totalOutstanding: outstanding[0]?.total || 0,
         totalPayrollExpenses: payroll[0]?.total || 0,
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // ─── Fee Defaulters List ─────────────────────────────────────────────────────
+
+  /**
+   * GET /tenant/finance/defaulters
+   * Returns students with outstanding (UNPAID/PARTIAL) invoices.
+   * Aggregates total due per student + overdue days from the oldest invoice.
+   * Query params: classId (optional filter), limit (default 100)
+   */
+  static async getDefaulters(req: Request, res: Response, next: NextFunction) {
+    try {
+      // Cast to ObjectId — aggregation $match does NOT auto-cast strings
+      const schoolId = new mongoose.Types.ObjectId(req.tenantId as string);
+      const { classId, limit = 100 } = req.query;
+      const today = new Date();
+
+      // Build match query
+      const matchQuery: any = {
+        schoolId,
+        isDeleted: false,
+        status: { $in: [InvoiceStatus.UNPAID, InvoiceStatus.PARTIAL] }
+      };
+
+      // Aggregate invoices grouped by student
+      const defaulters = await Invoice.aggregate([
+        { $match: matchQuery },
+        {
+          $group: {
+            _id: '$studentId',
+            totalDue: { $sum: '$dueAmount' },
+            invoiceCount: { $sum: 1 },
+            oldestDueDate: { $min: '$dueDate' },
+            latestInvoiceDate: { $max: '$issuedDate' },
+            invoiceIds: { $push: '$_id' }
+          }
+        },
+        {
+          $addFields: {
+            overdueDays: {
+              $max: [
+                0,
+                { $divide: [{ $subtract: [today, '$oldestDueDate'] }, 1000 * 60 * 60 * 24] }
+              ]
+            }
+          }
+        },
+        { $sort: { totalDue: -1 } },
+        { $limit: parseInt(limit as string) },
+        {
+          $lookup: {
+            from: 'students',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'student'
+          }
+        },
+        { $unwind: '$student' },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'student.userId',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: 'classsections',
+            localField: 'student.classId',
+            foreignField: '_id',
+            as: 'class'
+          }
+        },
+        { $unwind: { path: '$class', preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            _id: 1,
+            totalDue: 1,
+            invoiceCount: 1,
+            overdueDays: { $round: ['$overdueDays', 0] },
+            oldestDueDate: 1,
+            student: {
+              _id: '$student._id',
+              admissionNumber: '$student.admissionNumber',
+              classId: '$student.classId'
+            },
+            user: {
+              firstName: '$user.firstName',
+              lastName: '$user.lastName',
+            },
+            class: {
+              displayName: '$class.displayName',
+              grade: '$class.grade',
+              section: '$class.section'
+            }
+          }
+        }
+      ]);
+
+      // Optional class filter (post-aggregate since classId is on Student not Invoice)
+      const filtered = classId
+        ? defaulters.filter(d => d.student?.classId?.toString() === classId)
+        : defaulters;
+
+      return ApiResponse.success(res, filtered);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // ─── Individual Invoice Generation ────────────────────────────────────────────
+
+  /**
+   * POST /tenant/finance/invoices/generate-student
+   * Generates a one-off invoice for a specific student.
+   * Body: { studentId, academicYearId, categoryId, amount, dueDate, description }
+   */
+  static async generateStudentInvoice(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { studentId, academicYearId, categoryId, amount, dueDate, description } = req.body;
+      const schoolId = req.tenantId;
+
+      if (!studentId || !academicYearId || !amount || !dueDate) {
+        throw createError(400, ErrorCodes.BAD_REQUEST, 'studentId, academicYearId, amount, and dueDate are required');
+      }
+
+      const student = await Student.findOne({ _id: studentId, schoolId }).select('branchId');
+      if (!student) {
+        throw createError(404, ErrorCodes.NOT_FOUND, 'Student not found');
+      }
+
+      const now = new Date();
+      const invoiceNumber = `INV-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${Math.floor(Math.random() * 90000) + 10000}`;
+
+      const items = [{
+        categoryId: categoryId || null,
+        name: description || 'Fee',
+        amount: Math.round(amount) // should be in paise
+      }];
+
+      const invoice = new Invoice({
+        schoolId,
+        branchId: student.branchId,
+        studentId,
+        academicYearId,
+        invoiceNumber,
+        items,
+        totalAmount: Math.round(amount),
+        dueAmount: Math.round(amount),
+        paidAmount: 0,
+        status: InvoiceStatus.UNPAID,
+        issuedDate: now,
+        dueDate: new Date(dueDate),
+        createdBy: req.jwtPayload?.userId,
+      });
+
+      await invoice.save();
+
+      // Populate for response
+      const populated = await Invoice.findById(invoice._id)
+        .populate({ path: 'studentId', populate: { path: 'userId', select: 'firstName lastName' } });
+
+      return ApiResponse.created(res, populated, 'Invoice generated successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // ─── Invoice Receipt ───────────────────────────────────────────────────────────
+
+  /**
+   * GET /tenant/finance/invoices/:id/receipt
+   * Returns full invoice + related transactions for receipt generation.
+   */
+  static async getInvoiceReceipt(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const schoolId = req.tenantId;
+
+      const [invoice, transactions] = await Promise.all([
+        Invoice.findOne({ _id: id, schoolId })
+          .populate({
+            path: 'studentId',
+            select: 'admissionNumber classId',
+            populate: [
+              { path: 'userId', select: 'firstName lastName' },
+              { path: 'classId', select: 'displayName grade section' }
+            ]
+          }),
+        Transaction.find({ invoiceId: id, schoolId }).sort({ createdAt: -1 })
+      ]);
+
+      if (!invoice) {
+        throw createError(404, ErrorCodes.NOT_FOUND, 'Invoice not found');
+      }
+
+      return ApiResponse.success(res, { invoice, transactions });
     } catch (error) {
       next(error);
     }

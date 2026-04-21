@@ -64,9 +64,12 @@ router.get('/finance/structures', requireAdmin, FinanceController.listStructures
 // Invoicing & Collection
 router.get('/finance/invoices', requireAdmin, FinanceController.listInvoices);
 router.post('/finance/invoices/generate-class', requireAdmin, FinanceController.generateClassInvoices);
+router.post('/finance/invoices/generate-student', requireAdmin, FinanceController.generateStudentInvoice);
+router.get('/finance/invoices/:id/receipt', requireAdmin, FinanceController.getInvoiceReceipt);
 router.post('/finance/collect', requireAdmin, FinanceController.recordPayment);
 router.get('/finance/transactions', requireAdmin, FinanceController.listTransactions);
 router.get('/finance/stats', requireAdmin, FinanceController.getStats);
+router.get('/finance/defaulters', requireAdmin, FinanceController.getDefaulters);
 
 // Payroll
 router.get('/finance/payroll/config/:staffId', requireAdmin, FinanceController.getSalaryConfig);

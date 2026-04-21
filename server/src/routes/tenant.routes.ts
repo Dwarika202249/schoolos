@@ -51,7 +51,9 @@ router.get('/dashboard/stats', requireAnyStaff, TenantController.getDashboardSta
 // ─── Staff Routes ─────────────────────────────────────────────────────────────
 router.post('/staff', requireAdmin, StaffController.createStaff);
 router.get('/staff', requireAdmin, StaffController.getStaffList);
+router.get('/staff/me', requireAnyStaff, StaffController.getMyProfile);
 router.get('/staff/:id', requireAdmin, StaffController.getStaffDetails);
+router.patch('/staff/me', requireAnyStaff, StaffController.updateMyProfile);
 router.patch('/staff/:id', requireAdmin, StaffController.updateStaff);
 
 // Staff Attendance

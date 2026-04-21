@@ -194,31 +194,31 @@ export const StaffProfileView = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-2">
                       <p className="text-[10px] uppercase font-black text-slate-500 tracking-[0.2em]">Contact Email</p>
-                      <p className="text-lg font-bold text-foreground flex items-center gap-3">
+                      <div className="text-lg font-bold text-foreground flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20"><Mail className="w-5 h-5" /></div>
                         {staff.userId?.email}
-                      </p>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <p className="text-[10px] uppercase font-black text-slate-500 tracking-[0.2em]">Emergency Phone</p>
-                      <p className="text-lg font-bold text-foreground flex items-center gap-3">
+                      <div className="text-lg font-bold text-foreground flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20"><Phone className="w-5 h-5" /></div>
                         {staff.emergencyContact?.phone || 'Not Logged'}
-                      </p>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <p className="text-[10px] uppercase font-black text-slate-500 tracking-[0.2em]">Joining Date</p>
-                      <p className="text-lg font-bold text-foreground flex items-center gap-3">
+                      <div className="text-lg font-bold text-foreground flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20"><Calendar className="w-5 h-5" /></div>
                         {new Date(staff.joiningDate).toLocaleDateString(undefined, { dateStyle: 'long' })}
-                      </p>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <p className="text-[10px] uppercase font-black text-slate-500 tracking-[0.2em]">System Role</p>
-                      <p className="text-lg font-bold text-foreground flex items-center gap-3">
+                      <div className="text-lg font-bold text-foreground flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20"><ShieldCheck className="w-5 h-5" /></div>
                         {staff.userId?.role}
-                      </p>
+                      </div>
                     </div>
                   </div>
                 </Card>

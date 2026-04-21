@@ -203,7 +203,7 @@ export const TimetableManagement = () => {
               onChange={e => setSelectedClass(e.target.value)}
               className="w-full h-12 bg-card border border-white/5 rounded-xl px-4 text-sm font-bold outline-none focus:border-primary/50"
             >
-              {classes.map(c => <option key={c.id || c._id} value={c.id || c._id}>{c.displayName}</option>)}
+              {classes.map((c, idx) => <option key={c.id || c._id || idx} value={c.id || c._id}>{c.displayName}</option>)}
             </select>
           </div>
         </div>
@@ -299,7 +299,7 @@ export const TimetableManagement = () => {
                     className="w-full h-14 bg-card border border-white/10 rounded-2xl px-6 text-sm font-bold outline-none focus:border-primary"
                   >
                     <option value="">Select Subject</option>
-                    {subjects.map(s => <option key={s.id || s._id} value={s.id || s._id}>{s.name}</option>)}
+                    {subjects.map((s, idx) => <option key={s.id || s._id || idx} value={s.id || s._id}>{s.name}</option>)}
                   </select>
                 </div>
 
@@ -313,8 +313,8 @@ export const TimetableManagement = () => {
                     className="w-full h-14 bg-card border border-white/10 rounded-2xl px-6 text-sm font-bold outline-none focus:border-primary"
                   >
                     <option value="">Select Teacher</option>
-                    {teachers.map(t => (
-                      <option key={t.userId?.id || t.userId?._id || t.id || t._id} value={t.userId?.id || t.userId?._id}>
+                    {teachers.map((t, idx) => (
+                      <option key={t.userId?.id || t.userId?._id || t.id || t._id || idx} value={t.userId?.id || t.userId?._id}>
                         {t.userId?.firstName} {t.userId?.lastName}
                       </option>
                     ))}

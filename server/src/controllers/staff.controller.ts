@@ -238,4 +238,78 @@ export class StaffController {
       next(error);
     }
   }
+
+  /**
+   * GET /staff/me — Getown profile
+   */
+  static async getMyProfile(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.jwtPayload?.userId;
+      const staff = await StaffProfile.findOne({ userId, schoolId: req.tenantId })
+        .populate('userId', 'firstName lastName email role isActive avatarUrl');
+      
+      if (!staff) {
+        throw createError(404, ErrorCodes.NOT_FOUND, 'Staff profile not found');
+      }
+      return ApiResponse.success(res, staff);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * PATCH /staff/me — Update own profile
+   */
+  static async updateMyProfile(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.jwtPayload?.userId;
+      const staff = await StaffProfile.findOne({ userId, schoolId: req.tenantId });
+      
+      if (!staff) {
+        throw createError(404, ErrorCodes.NOT_FOUND, 'Staff profile not found');
+      }
+
+      const { 
+        firstName, lastName, avatarUrl, 
+        gender, dob, bloodGroup, phone, alternatePhone,
+        emergencyContact, bankDetails, address, bio,
+        maritalStatus, experience
+      } = req.body;
+
+      // 1. Update User info if provided
+      if (firstName || lastName || avatarUrl) {
+        await User.findByIdAndUpdate(userId, {
+          ...(firstName && { firstName }),
+          ...(lastName && { lastName }),
+          ...(avatarUrl && { avatarUrl })
+        });
+      }
+
+      // 2. Update whitelisted StaffProfile fields
+      const updateData: any = {
+        updatedBy: userId,
+        ...(gender && { gender }),
+        ...(dob && { dob }),
+        ...(bloodGroup && { bloodGroup }),
+        ...(phone && { phone }),
+        ...(alternatePhone && { alternatePhone }),
+        ...(emergencyContact && { emergencyContact }),
+        ...(bankDetails && { bankDetails }),
+        ...(address && { address }),
+        ...(bio && { bio }),
+        ...(maritalStatus && { maritalStatus }),
+        ...(experience && { experience })
+      };
+
+      const updatedProfile = await StaffProfile.findByIdAndUpdate(
+        staff._id,
+        updateData,
+        { new: true, runValidators: true }
+      ).populate('userId', 'firstName lastName email role isActive avatarUrl');
+
+      return ApiResponse.success(res, updatedProfile, 'Profile updated successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
 }

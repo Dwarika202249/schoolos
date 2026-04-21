@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { ClassSection } from '../models/ClassSection.model';
+import { Timetable } from '../models/Timetable.model';
 import { ApiResponse } from '../utils/response.util';
 import { createError, ErrorCodes } from '../utils/error.util';
+import mongoose from 'mongoose';
 import { withTenantScope } from '../utils/tenantQuery.util';
 
 export class ClassSectionController {
@@ -27,6 +29,33 @@ export class ClassSectionController {
       
       if (academicYearId) filter.academicYearId = academicYearId;
       if (branchId) filter.branchId = branchId;
+
+      // ── Scoping for Teachers ──────────────────────────────────────────
+      if (req.jwtPayload?.role === 'TEACHER') {
+          const teacherId = new mongoose.Types.ObjectId(req.jwtPayload.userId as string);
+          
+          // Find classes where teacher is assigned (Class Teacher or Timetable)
+          const timetableClasses = await Timetable.find({ schoolId: req.tenantId, teacherId }).distinct('classId');
+          
+          // Combine with classes where they are Class Teacher
+          filter.$or = [
+              { classId: { $in: timetableClasses } },
+              { classTeacherId: teacherId }
+          ];
+
+          // Special case: In the model, 'filter' is already used for query.
+          // Since ClassSection model's local fields for filtering are grade/section,
+          // we use the combined assignment check.
+          filter = {
+             ...filter,
+             $or: [
+                { _id: { $in: timetableClasses } },
+                { classTeacherId: teacherId }
+             ]
+          };
+          delete filter.classId; // Remove the temporary key if any
+      }
+      // ──────────────────────────────────────────────────────────────────
 
       const query = withTenantScope(req, filter);
       const classes = await ClassSection.find(query).sort({ grade: 1, section: 1 });

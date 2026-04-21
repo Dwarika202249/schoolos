@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { Student } from '../models/Student.model';
 import { User } from '../models/User.model';
+import { ClassSection } from '../models/ClassSection.model';
+import { Timetable } from '../models/Timetable.model';
 import { ApiResponse } from '../utils/response.util';
 import { createError, ErrorCodes } from '../utils/error.util';
 import { withTenantScope } from '../utils/tenantQuery.util';
@@ -177,6 +179,35 @@ export class StudentController {
       if (classId) baseMatch.classId = new mongoose.Types.ObjectId(classId as string);
       if (sectionId) baseMatch.sectionId = new mongoose.Types.ObjectId(sectionId as string);
       if (status && status !== 'ALL') baseMatch.status = status;
+
+      // ── Scoping for Teachers ──────────────────────────────────────────
+      // If the user is a TEACHER, limit them to their assigned classes
+      if (req.jwtPayload?.role === 'TEACHER') {
+          const teacherId = new mongoose.Types.ObjectId(req.jwtPayload.userId as string);
+          
+          // 1. Classes where they are the primary Class Teacher
+          const primaryClasses = await ClassSection.find({ schoolId: req.tenantId, classTeacherId: teacherId }).select('_id');
+          const primaryClassIds = primaryClasses.map(c => c._id);
+
+          // 2. Classes where they teach at least one subject (Timetable)
+          const timetableClasses = await Timetable.find({ schoolId: req.tenantId, teacherId }).distinct('classId');
+          
+          const assignedClassIds = [...new Set([...primaryClassIds, ...timetableClasses])];
+
+          // If they have a specific classId filter, ensure it's one they are assigned to
+          if (baseMatch.classId) {
+             const requestedId = baseMatch.classId.toString();
+             const isAssigned = assignedClassIds.some(id => id.toString() === requestedId);
+             if (!isAssigned) {
+                // If not assigned to requested class, return empty
+                return ApiResponse.success(res, { students: [], meta: { total: 0, page: pPage, limit: pLimit, totalPages: 0 } });
+             }
+          } else {
+             // If no specific class requested, show all assigned classes
+             baseMatch.classId = { $in: assignedClassIds };
+          }
+      }
+      // ──────────────────────────────────────────────────────────────────
 
       // Pipeline for data
       const pipeline: any[] = [

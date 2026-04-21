@@ -23,7 +23,7 @@ router.delete('/branches/:id', requireOwner, BranchController.delete);
 // ─── Academic Year Routes ─────────────────────────────────────────────────────
 // Docs: POST/PATCH = OWNER, GET = OWNER/ADMIN
 router.post('/academic-years', requireOwner, AcademicYearController.create);
-router.get('/academic-years', requireAdmin, AcademicYearController.list);
+router.get('/academic-years', requireAnyStaff, AcademicYearController.list);
 router.patch('/academic-years/:id', requireOwner, AcademicYearController.update);
 router.delete('/academic-years/:id', requireOwner, AcademicYearController.delete);
 
@@ -116,7 +116,7 @@ router.post('/substitution/assign', requireAdmin, TimetableController.assignSubs
 router.get('/exams/student-report/:studentId', requireAnyStaff, ExamController.getStudentReport);
 
 router.post('/exams/grade-system/seed', requireAdmin, ExamController.seedDefaultGrades);
-router.get('/exams/grade-system', requireAdmin, ExamController.getGradeSystem);
+router.get('/exams/grade-system', requireAnyStaff, ExamController.getGradeSystem);
 router.post('/exams/grade-system', requireAdmin, ExamController.createGrade);
 router.patch('/exams/grade-system/:id', requireAdmin, ExamController.updateGrade);
 router.delete('/exams/grade-system/:id', requireAdmin, ExamController.deleteGrade);

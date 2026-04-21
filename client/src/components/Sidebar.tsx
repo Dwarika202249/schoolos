@@ -17,6 +17,17 @@ import {
 import { useAuth } from '../hooks/useAuth';
 
 const getNavigation = (role: string) => {
+  const isAdmin = role === 'OWNER' || role === 'ADMIN';
+  
+  if (role === 'TEACHER') {
+    return [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'My Students', href: '/students', icon: Users },
+      { name: 'Mark Attendance', href: '/attendance', icon: CalendarDays },
+      { name: 'Exams & Marks', href: '/exams', icon: GraduationCap },
+    ];
+  }
+
   const base = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Students', href: '/students', icon: Users },
@@ -24,18 +35,18 @@ const getNavigation = (role: string) => {
     { name: 'Exams & Grades', href: '/exams', icon: GraduationCap },
   ];
 
-    if (role === 'OWNER' || role === 'ADMIN') {
+  if (isAdmin) {
     base.push(
-      { name: 'Staff', href: '/staff', icon: Users },
-      { name: 'Academic', href: '/academic', icon: BookOpen },
-      { name: 'Finance', href: '/finance', icon: CreditCard }
+      { name: 'Staff Directory', href: '/staff', icon: Users },
+      { name: 'Academic Engine', href: '/academic', icon: BookOpen },
+      { name: 'Finance Control', href: '/finance', icon: CreditCard }
     );
   }
 
   if (role === 'OWNER') {
     base.push(
       { name: 'Branches', href: '/branches', icon: Building2 },
-      { name: 'Settings', href: '/settings', icon: Settings }
+      { name: 'Global Settings', href: '/settings', icon: Settings }
     );
   }
 

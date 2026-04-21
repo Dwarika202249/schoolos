@@ -28,6 +28,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../hooks/useAuth';
 
 interface Student {
     _id: string;
@@ -53,6 +54,8 @@ interface Student {
 }
 
 export const StudentManagement = () => {
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'OWNER' || user?.role === 'ADMIN';
     const navigate = useNavigate();
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
@@ -202,8 +205,12 @@ export const StudentManagement = () => {
             {/* Header Area */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 className="text-4xl lg:text-5xl font-black text-foreground tracking-tight uppercase italic drop-shadow-sm">STUDENT ROSTER</h1>
-                    <p className="text-slate-400 font-medium text-sm mt-2 tracking-wide">Manage enrollments, track compliance, and view global student metrics.</p>
+                    <h1 className="text-4xl lg:text-5xl font-black text-foreground tracking-tight uppercase italic drop-shadow-sm">
+                        {isAdmin ? 'STUDENT ROSTER' : 'MY STUDENTS'}
+                    </h1>
+                    <p className="text-slate-400 font-medium text-sm mt-2 tracking-wide">
+                        {isAdmin ? 'Manage enrollments, track compliance, and view global student metrics.' : 'View and interact with students across your assigned classes.'}
+                    </p>
                 </div>
 
                 <div className="flex items-center gap-3 bg-white/5 p-2 rounded-[1.5rem] border border-white/10 shadow-inner">
@@ -221,13 +228,17 @@ export const StudentManagement = () => {
                     >
                         <ListIcon className="w-5 h-5" />
                     </button>
-                    <div className="w-[1px] h-8 bg-white/10 mx-2" />
-                    <Link to="/students/enroll">
-                        <Button className="rounded-xl px-6 h-12 shadow-xl shadow-primary/20 font-black tracking-tight uppercase text-xs">
-                            <Plus className="w-5 h-5 mr-2" />
-                            New Enrollment
-                        </Button>
-                    </Link>
+                    {isAdmin && (
+                        <>
+                            <div className="w-[1px] h-8 bg-white/10 mx-2" />
+                            <Link to="/students/enroll">
+                                <Button className="rounded-xl px-6 h-12 shadow-xl shadow-primary/20 font-black tracking-tight uppercase text-xs">
+                                    <Plus className="w-5 h-5 mr-2" />
+                                    New Enrollment
+                                </Button>
+                            </Link>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -264,19 +275,21 @@ export const StudentManagement = () => {
                     </div>
                 </Card>
 
-                <Card className="p-8 border-white/20 shadow-2xl shadow-black/60 bg-card/40 backdrop-blur-xl rounded-[2.5rem] relative overflow-hidden group hover:border-rose-500/40 transition-all duration-300">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 blur-3xl rounded-full group-hover:scale-150 transition-all duration-700" />
-                    <div className="flex items-start justify-between relative z-10">
-                        <div className="space-y-2">
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Fee Default Alerts</p>
-                            <p className="text-5xl font-black text-rose-500 tracking-tighter">18</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Action Required</p>
+                {isAdmin && (
+                    <Card className="p-8 border-white/20 shadow-2xl shadow-black/60 bg-card/40 backdrop-blur-xl rounded-[2.5rem] relative overflow-hidden group hover:border-rose-500/40 transition-all duration-300">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 blur-3xl rounded-full group-hover:scale-150 transition-all duration-700" />
+                        <div className="flex items-start justify-between relative z-10">
+                            <div className="space-y-2">
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Fee Default Alerts</p>
+                                <p className="text-5xl font-black text-rose-500 tracking-tighter">18</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Action Required</p>
+                            </div>
+                            <div className="w-14 h-14 bg-rose-500/10 rounded-[1.2rem] flex items-center justify-center text-rose-500 shadow-inner border border-rose-500/20 group-hover:scale-110 transition-transform text-center cursor-pointer hover:bg-rose-500 hover:text-white">
+                                <CircleDollarSign className="w-7 h-7" />
+                            </div>
                         </div>
-                        <div className="w-14 h-14 bg-rose-500/10 rounded-[1.2rem] flex items-center justify-center text-rose-500 shadow-inner border border-rose-500/20 group-hover:scale-110 transition-transform text-center cursor-pointer hover:bg-rose-500 hover:text-white">
-                            <CircleDollarSign className="w-7 h-7" />
-                        </div>
-                    </div>
-                </Card>
+                    </Card>
+                )}
             </div>
 
             {/* Toolbar & Search */}
@@ -302,22 +315,24 @@ export const StudentManagement = () => {
                     </div>
                 </div>
 
-                <div className="flex gap-4">
-                    <Button
-                        variant="outline"
-                        className="h-16 px-8 rounded-2xl border-white/20 bg-white/5 font-black uppercase text-[10px] tracking-widest hover:border-primary/50"
-                        onClick={() => navigate('/students/import')}
-                    >
-                        <FileSpreadsheet className="w-4 h-4 mr-2" /> Bulk Import
-                    </Button>
-                    <Button
-                        variant="outline"
-                        className="h-16 px-8 rounded-2xl border-rose-500/30 text-rose-400 bg-rose-500/5 hover:bg-rose-500 hover:text-white font-black uppercase text-[10px] tracking-widest transition-all"
-                        onClick={() => setShowPromoteDialog(true)}
-                    >
-                        <GraduationCap className="w-4 h-4 mr-2" /> Bulk Promote
-                    </Button>
-                </div>
+                {isAdmin && (
+                    <div className="flex gap-4">
+                        <Button
+                            variant="outline"
+                            className="h-16 px-8 rounded-2xl border-white/20 bg-white/5 font-black uppercase text-[10px] tracking-widest hover:border-primary/50"
+                            onClick={() => navigate('/students/import')}
+                        >
+                            <FileSpreadsheet className="w-4 h-4 mr-2" /> Bulk Import
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="h-16 px-8 rounded-2xl border-rose-500/30 text-rose-400 bg-rose-500/5 hover:bg-rose-500 hover:text-white font-black uppercase text-[10px] tracking-widest transition-all"
+                            onClick={() => setShowPromoteDialog(true)}
+                        >
+                            <GraduationCap className="w-4 h-4 mr-2" /> Bulk Promote
+                        </Button>
+                    </div>
+                )}
             </div>
 
             {/* Main Data View */}
@@ -398,9 +413,11 @@ export const StudentManagement = () => {
                                                             <button className="p-2 bg-white/5 hover:bg-primary hover:text-white rounded-lg transition-colors border border-white/5 tooltip group/btn relative" title="Dispatch SMS">
                                                                 <MessageSquare className="w-4 h-4" />
                                                             </button>
-                                                            <button className="p-2 bg-white/5 hover:bg-rose-500 hover:text-white rounded-lg transition-colors border border-white/5 group/btn relative" title="Collect Fee">
-                                                                <IndianRupee className="w-4 h-4" />
-                                                            </button>
+                                                            {isAdmin && (
+                                                                <button className="p-2 bg-white/5 hover:bg-rose-500 hover:text-white rounded-lg transition-colors border border-white/5 group/btn relative" title="Collect Fee">
+                                                                    <IndianRupee className="w-4 h-4" />
+                                                                </button>
+                                                            )}
                                                             <div className="w-[1px] h-4 bg-white/10 mx-1" />
                                                             <button title="More Options" className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors border border-white/5 text-slate-400">
                                                                 <MoreVertical className="w-4 h-4" />

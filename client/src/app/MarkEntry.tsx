@@ -22,6 +22,7 @@ export const MarkEntry = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [canEdit, setCanEdit] = useState(true);
 
   const [schedule, setSchedule] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
@@ -31,10 +32,11 @@ export const MarkEntry = () => {
     try {
       setLoading(true);
       const res = await api.get(`/tenant/exams/marking-sheet/${scheduleId}`);
-      const { schedule, students, existingMarks } = res.data.data;
+      const { schedule, students, existingMarks, canEdit: editPermission } = res.data.data;
 
       setSchedule(schedule);
       setStudents(students);
+      setCanEdit(editPermission ?? true);
 
       // Initialize marks mapping
       const mapping: any = {};
@@ -146,13 +148,20 @@ export const MarkEntry = () => {
               <p className="font-bold text-slate-500">Passing: {schedule?.passingMarks}</p>
             </div>
           </div>
-          <Button
-            onClick={handleSave}
-            isLoading={saving}
-            className="flex-1 md:flex-none px-10 py-6 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-xl shadow-emerald-500/10 font-black text-lg gap-3"
-          >
-            <Save className="w-5 h-5" /> Save Result
-          </Button>
+          {canEdit ? (
+            <Button
+                onClick={handleSave}
+                isLoading={saving}
+                className="flex-1 md:flex-none px-10 py-6 rounded-2xl bg-emerald-500 hover:bg-emerald-600 shadow-xl shadow-emerald-500/10 font-black text-lg gap-3"
+            >
+                <Save className="w-5 h-5" /> Save Result
+            </Button>
+          ) : (
+            <div className="px-6 py-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center gap-3 text-amber-500 font-bold">
+               <AlertCircle className="w-5 h-5" />
+               View Only Access
+            </div>
+          )}
         </div>
       </div>
 
@@ -192,7 +201,8 @@ export const MarkEntry = () => {
                         <td className="px-8 py-6">
                           <select
                             title="Status"
-                            className={`bg-white/5 border border-white/5 rounded-xl px-4 py-2 text-xs font-black outline-none transition-all ${markData.status === 'PRESENT' ? 'text-emerald-500' : 'text-rose-500'}`}
+                            disabled={!canEdit}
+                            className={`bg-white/5 border border-white/5 rounded-xl px-4 py-2 text-xs font-black outline-none transition-all ${markData.status === 'PRESENT' ? 'text-emerald-500' : 'text-rose-500'} disabled:opacity-50`}
                             value={markData.status}
                             onChange={e => handleUpdateRecord(id, 'status', e.target.value)}
                           >
@@ -206,7 +216,7 @@ export const MarkEntry = () => {
                             <input
                               type="number"
                               placeholder="00"
-                              disabled={markData.status !== 'PRESENT'}
+                              disabled={!canEdit || markData.status !== 'PRESENT'}
                               className={`w-28 bg-white/5 border border-white/5 rounded-xl px-4 py-2.5 text-center font-black text-xl outline-none focus:border-primary/50 transition-all ${parseFloat(markData.obtainedMarks) > schedule?.maxMarks ? 'border-rose-500/50 text-rose-500' : 'text-primary'} disabled:opacity-30 disabled:cursor-not-allowed`}
                               value={markData.obtainedMarks}
                               onChange={e => handleUpdateRecord(id, 'obtainedMarks', e.target.value)}
@@ -218,7 +228,8 @@ export const MarkEntry = () => {
                           <input
                             type="text"
                             placeholder="Good / Needs Improvement..."
-                            className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:border-primary/50 transition-all"
+                            disabled={!canEdit}
+                            className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:border-primary/50 transition-all disabled:opacity-50"
                             value={markData.remarks}
                             onChange={e => handleUpdateRecord(id, 'remarks', e.target.value)}
                           />

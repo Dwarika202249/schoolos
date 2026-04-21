@@ -20,8 +20,11 @@ import { Card } from '../components/ui/Card';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 export const ExamManagement = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'OWNER' || user?.role === 'ADMIN';
   const [activeTab, setActiveTab] = useState<'schedules' | 'terms' | 'grading'>('schedules');
   const [loading, setLoading] = useState(true);
   const [gradeSystem, setGradeSystem] = useState<any[]>([]);
@@ -227,28 +230,30 @@ export const ExamManagement = () => {
           </h1>
           <p className="text-slate-500 font-medium mt-1">Manage academic cycles, schedule papers, and publish results.</p>
         </div>
-        <div className="flex gap-4">
-          <Button
-            variant="outline"
-            onClick={() => setActiveTab('grading')}
-            className="rounded-2xl px-6 py-6 border-emerald-500/30 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-black transition-all font-bold"
-          >
-            Setup Grades
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setIsTermModalOpen(true)}
-            className="rounded-2xl px-6 py-6 border-white/10 bg-card hover:bg-white/10 transition-all font-bold"
-          >
-            Create Term
-          </Button>
-          <Button
-            onClick={() => setIsScheduleModalOpen(true)}
-            className="rounded-2xl px-8 py-6 shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 transition-all font-black flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" /> Schedule Paper
-          </Button>
-        </div>
+        {isAdmin && (
+          <div className="flex gap-4">
+            <Button
+              variant="outline"
+              onClick={() => setActiveTab('grading')}
+              className="rounded-2xl px-6 py-6 border-emerald-500/30 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-black transition-all font-bold"
+            >
+              Setup Grades
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsTermModalOpen(true)}
+              className="rounded-2xl px-6 py-6 border-white/10 bg-card hover:bg-white/10 transition-all font-bold"
+            >
+              Create Term
+            </Button>
+            <Button
+              onClick={() => setIsScheduleModalOpen(true)}
+              className="rounded-2xl px-8 py-6 shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 transition-all font-black flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" /> Schedule Paper
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Tabs & Filters */}
@@ -260,18 +265,22 @@ export const ExamManagement = () => {
           >
             Exam Schedules
           </button>
-          <button
-            onClick={() => setActiveTab('terms')}
-            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'terms' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:text-white'}`}
-          >
-            Manage Terms
-          </button>
-          <button
-            onClick={() => setActiveTab('grading')}
-            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'grading' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:text-white'}`}
-          >
-            Grading System
-          </button>
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => setActiveTab('terms')}
+                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'terms' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:text-white'}`}
+              >
+                Manage Terms
+              </button>
+              <button
+                onClick={() => setActiveTab('grading')}
+                className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'grading' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:text-white'}`}
+              >
+                Grading System
+              </button>
+            </>
+          )}
         </div>
 
         {activeTab === 'schedules' && (
@@ -280,7 +289,7 @@ export const ExamManagement = () => {
               <Filter className="w-3.5 h-3.5 text-slate-500" />
               <select
                 title="Select Term"
-                className="bg-transparent border-none text-sm font-bold outline-none"
+                className="bg-card border-none text-sm font-bold outline-none"
                 value={selectedTerm}
                 onChange={e => setSelectedTerm(e.target.value)}
               >
@@ -357,40 +366,46 @@ export const ExamManagement = () => {
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Link
-                          to={`/exams/marking/${sch.id || sch._id}`}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary hover:bg-primary text-xs font-black rounded-xl transition-all hover:text-white"
-                        >
-                          <FileSpreadsheet className="w-3.5 h-3.5" />
-                          Marks
-                        </Link>
-                        <button
-                          title="Edit"
-                          onClick={() => {
-                            setEditingSchedule(sch);
-                            setScheduleForm({
-                              examTermId: sch.examTermId?._id || sch.examTermId,
-                              classId: sch.classId?._id || sch.classId,
-                              subjectId: sch.subjectId?._id || sch.subjectId,
-                              examDate: new Date(sch.examDate).toISOString().split('T')[0],
-                              startTime: sch.startTime || '',
-                              duration: sch.duration || '',
-                              maxMarks: sch.maxMarks.toString(),
-                              passingMarks: sch.passingMarks.toString(),
-                            });
-                            setIsScheduleModalOpen(true);
-                          }}
-                          className="p-2 text-slate-500 hover:text-primary transition-colors bg-white/5 rounded-xl"
-                        >
-                          <ChevronRight className="w-4 h-4 rotate-[-90deg]" />
-                        </button>
-                        <button
-                          title="Delete"
-                          onClick={() => handleDeleteSchedule(sch)}
-                          className="p-2 text-slate-500 hover:text-rose-500 transition-colors bg-white/5 rounded-xl"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {sch.canMark && (
+                          <Link
+                            to={`/exams/marking/${sch.id || sch._id}`}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-primary/20 text-primary hover:bg-primary hover:text-white text-xs font-black rounded-xl transition-all"
+                          >
+                            <FileSpreadsheet className="w-3.5 h-3.5" />
+                            Marks
+                          </Link>
+                        )}
+                        {isAdmin && (
+                          <>
+                            <button
+                              title="Edit"
+                              onClick={() => {
+                                setEditingSchedule(sch);
+                                setScheduleForm({
+                                  examTermId: sch.examTermId?._id || sch.examTermId,
+                                  classId: sch.classId?._id || sch.classId,
+                                  subjectId: sch.subjectId?._id || sch.subjectId,
+                                  examDate: new Date(sch.examDate).toISOString().split('T')[0],
+                                  startTime: sch.startTime || '',
+                                  duration: sch.duration || '',
+                                  maxMarks: sch.maxMarks.toString(),
+                                  passingMarks: sch.passingMarks.toString(),
+                                });
+                                setIsScheduleModalOpen(true);
+                              }}
+                              className="p-2 text-slate-500 hover:text-primary transition-colors bg-white/5 rounded-xl"
+                            >
+                              <ChevronRight className="w-4 h-4 rotate-[-90deg]" />
+                            </button>
+                            <button
+                              title="Delete"
+                              onClick={() => handleDeleteSchedule(sch)}
+                              className="p-2 text-slate-500 hover:text-rose-500 transition-colors bg-white/5 rounded-xl"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

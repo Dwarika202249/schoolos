@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { Attendance } from '../models/Attendance.model';
 import { Student } from '../models/Student.model';
 import { AcademicYear } from '../models/AcademicYear.model';
+import { Timetable } from '../models/Timetable.model';
+import { ClassSection } from '../models/ClassSection.model';
 import { ApiResponse } from '../utils/response.util';
 import { createError, ErrorCodes } from '../utils/error.util';
 import mongoose from 'mongoose';
@@ -24,6 +26,20 @@ export class AttendanceController {
       if (!mongoose.Types.ObjectId.isValid(classId as string)) {
         throw createError(400, ErrorCodes.BAD_REQUEST, 'Invalid Class ID format');
       }
+
+      // ── Security Scoping for Teachers ────────────────────────────────
+      if (req.jwtPayload?.role === 'TEACHER') {
+          const teacherId = new mongoose.Types.ObjectId(req.jwtPayload.userId as string);
+          const cid = new mongoose.Types.ObjectId(classId as string);
+
+          const isClassTeacher = await ClassSection.exists({ _id: cid, classTeacherId: teacherId });
+          const isSubjectTeacher = await Timetable.exists({ classId: cid, teacherId });
+
+          if (!isClassTeacher && !isSubjectTeacher) {
+              throw createError(403, ErrorCodes.FORBIDDEN, 'You are not authorized to view this attendance sheet.');
+          }
+      }
+      // ──────────────────────────────────────────────────────────────────
 
       const queryDate = new Date(date as string);
       queryDate.setUTCHours(0, 0, 0, 0);
@@ -75,6 +91,20 @@ export class AttendanceController {
       if (ay?.isLocked) {
         throw createError(403, ErrorCodes.FORBIDDEN, 'Attendance cannot be marked for a locked Academic Year');
       }
+
+      // ── Security Scoping for Teachers ────────────────────────────────
+      if (req.jwtPayload?.role === 'TEACHER') {
+          const teacherId = new mongoose.Types.ObjectId(req.jwtPayload.userId as string);
+          const cid = new mongoose.Types.ObjectId(classId as string);
+
+          const isClassTeacher = await ClassSection.exists({ _id: cid, classTeacherId: teacherId });
+          const isSubjectTeacher = await Timetable.exists({ classId: cid, teacherId });
+
+          if (!isClassTeacher && !isSubjectTeacher) {
+              throw createError(403, ErrorCodes.FORBIDDEN, 'You are not authorized to mark attendance for this class.');
+          }
+      }
+      // ──────────────────────────────────────────────────────────────────
 
       const queryDate = new Date(date);
       queryDate.setUTCHours(0, 0, 0, 0);

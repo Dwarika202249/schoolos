@@ -43,19 +43,7 @@ export const AttendanceManagement = () => {
           api.get('/tenant/academic-years')
         ]);
 
-        let allClasses = cRes.data.data;
-
-        // ── Teacher Filter ──────────────────────────────────────────
-        // If the user is a TEACHER, show only their assigned class
-        // A class is theirs if classTeacherId === their staffProfileId
-        if (isTeacher) {
-          const myClasses = allClasses.filter(
-            (c: any) => (c.classTeacherId === (user?.id || user?._id))
-          );
-          allClasses = myClasses;
-        }
-        // ────────────────────────────────────────────────────────────
-
+        const allClasses = cRes.data.data;
         setClasses(allClasses);
         const years = yRes.data.data;
         setAcademicYears(years);

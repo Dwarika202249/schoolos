@@ -4,6 +4,8 @@ import { ExamSchedule } from '../models/ExamSchedule.model';
 import { StudentMark } from '../models/StudentMark.model';
 import { Student } from '../models/Student.model';
 import { GradeSystem } from '../models/GradeSystem.model';
+import { Timetable } from '../models/Timetable.model';
+import { ClassSection } from '../models/ClassSection.model';
 import { ApiResponse } from '../utils/response.util';
 import { createError, ErrorCodes } from '../utils/error.util';
 import mongoose from 'mongoose';
@@ -170,12 +172,37 @@ export class ExamController {
       if (examTermId) query.examTermId = new mongoose.Types.ObjectId(examTermId as string);
       if (classId) query.classId = new mongoose.Types.ObjectId(classId as string);
 
-      const schedules = await ExamSchedule.find(query)
+      const schedulesData = await ExamSchedule.find(query)
         .populate('subjectId', 'name code')
         .populate('classId', 'displayName')
         .sort({ examDate: 1 });
+
+      // Add canMark flag for Teachers
+      let finalSchedules = schedulesData.map(s => s.toObject());
+
+      if (req.jwtPayload?.role === 'TEACHER') {
+          const teacherId = req.jwtPayload.userId as string;
+          
+          const primaryClasses = await ClassSection.find({ schoolId: req.tenantId, classTeacherId: teacherId }).distinct('_id');
+          const timetableAssignments = await Timetable.find({ schoolId: req.tenantId, teacherId }).select('classId subjectId');
+          
+          const assignedClassIds = primaryClasses.map(id => id.toString());
+
+          finalSchedules = finalSchedules.map(sch => {
+              const schClassId = sch.classId?._id?.toString() || sch.classId?.toString();
+              const schSubId = sch.subjectId?._id?.toString() || sch.subjectId?.toString();
+
+              const isCT = assignedClassIds.includes(schClassId);
+              const isST = timetableAssignments.some(t => t.classId.toString() === schClassId && t.subjectId.toString() === schSubId);
+
+              return { ...sch, canMark: isCT || isST };
+          });
+      } else {
+          // Admins/Owners can always mark
+          finalSchedules = finalSchedules.map(sch => ({ ...sch, canMark: true }));
+      }
       
-      return ApiResponse.success(res, schedules);
+      return ApiResponse.success(res, finalSchedules);
     } catch (error) {
       next(error);
     }
@@ -195,6 +222,26 @@ export class ExamController {
       const schedule = await ExamSchedule.findOne({ _id: scheduleId, schoolId });
       if (!schedule) throw createError(404, ErrorCodes.NOT_FOUND, 'Exam schedule not found');
 
+      // ── Security Scoping for Teachers ────────────────────────────────
+      let canEdit = true;
+      if (req.jwtPayload?.role === 'TEACHER') {
+          const teacherId = new mongoose.Types.ObjectId(req.jwtPayload.userId as string);
+          
+          const isClassTeacher = await ClassSection.exists({ _id: schedule.classId, classTeacherId: teacherId });
+          const isSubjectTeacher = await Timetable.exists({ 
+              classId: schedule.classId, 
+              subjectId: schedule.subjectId, 
+              teacherId 
+          });
+
+          if (!isClassTeacher && !isSubjectTeacher) {
+              canEdit = false;
+          }
+      } else if (req.jwtPayload?.role === 'ADMIN' || req.jwtPayload?.role === 'OWNER') {
+          canEdit = true;
+      }
+      // ──────────────────────────────────────────────────────────────────
+
       const [students, existingMarks] = await Promise.all([
         Student.find({ 
           schoolId, 
@@ -211,7 +258,8 @@ export class ExamController {
       return ApiResponse.success(res, {
         schedule,
         students,
-        existingMarks
+        existingMarks,
+        canEdit
       });
     } catch (error) {
       next(error);
@@ -230,6 +278,18 @@ export class ExamController {
 
       const schedule = await ExamSchedule.findOne({ _id: examScheduleId, schoolId });
       if (!schedule) throw createError(404, ErrorCodes.NOT_FOUND, 'Exam schedule not found');
+
+      // ── Strict Security Check for Teachers ────────────────────────────────
+      if (req.jwtPayload?.role === 'TEACHER') {
+        const teacherId = new mongoose.Types.ObjectId(req.jwtPayload.userId as string);
+        const isCT = await ClassSection.exists({ _id: schedule.classId, classTeacherId: teacherId });
+        const isST = await Timetable.exists({ classId: schedule.classId, subjectId: schedule.subjectId, teacherId });
+
+        if (!isCT && !isST) {
+            throw createError(403, ErrorCodes.FORBIDDEN, 'You are only authorized to submit marks for your assigned classes/subjects.');
+        }
+      }
+      // ──────────────────────────────────────────────────────────────────────
 
       // Fetch grade system for this school to auto-calculate grades
       const gradeSystem = await GradeSystem.find({ schoolId, isDeleted: { $ne: true } });

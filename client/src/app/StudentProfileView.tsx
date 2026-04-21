@@ -29,12 +29,16 @@ import api from '../utils/api';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { generateReportCard } from '../utils/reportCardGenerator';
+import { useAuth } from '../hooks/useAuth';
 
 type Tab = 'overview' | 'academic' | 'attendance' | 'financial' | 'guardians';
 
 export const StudentProfileView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'OWNER' || currentUser?.role === 'ADMIN';
+
   const [student, setStudent] = useState<any>(null);
   const [attendanceStats, setAttendanceStats] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<Tab>('overview');
@@ -162,33 +166,37 @@ export const StudentProfileView = () => {
           Roster
         </Button>
         <div className="flex gap-4">
-          <Button 
-            variant="outline" 
-            onClick={handleResendActivation}
-            className="rounded-2xl border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white h-12 px-6 font-black text-xs uppercase tracking-widest transition-all shadow-xl"
-            title="Dispatch zero-trust magic link to assigned emails"
-          >
-            <Mail className="w-4 h-4 mr-2" />
-            Ping Activation
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={handleToggleStatus}
-            className={`rounded-2xl border-white/10 h-12 px-6 font-black text-xs uppercase tracking-widest transition-all shadow-xl hover:text-white ${
-              student.status === 'ACTIVE' 
-                ? 'hover:bg-rose-500 hover:border-rose-500 text-rose-400' 
-                : 'hover:bg-emerald-500 hover:border-emerald-500 text-emerald-400'
-            }`}
-          >
-            {student.status === 'ACTIVE' ? <XCircle className="w-4 h-4 mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-            {student.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
-          </Button>
-          <Link to={`/students/edit/${student._id || id}`}>
-             <Button className="rounded-2xl h-12 px-8 font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20">
-               <Edit className="w-4 h-4 mr-2" />
-               Modify Core
-             </Button>
-          </Link>
+          {isAdmin && (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={handleResendActivation}
+                className="rounded-2xl border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white h-12 px-6 font-black text-xs uppercase tracking-widest transition-all shadow-xl"
+                title="Dispatch zero-trust magic link to assigned emails"
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Ping Activation
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleToggleStatus}
+                className={`rounded-2xl border-white/10 h-12 px-6 font-black text-xs uppercase tracking-widest transition-all shadow-xl hover:text-white ${
+                  student.status === 'ACTIVE' 
+                    ? 'hover:bg-rose-500 hover:border-rose-500 text-rose-400' 
+                    : 'hover:bg-emerald-500 hover:border-emerald-500 text-emerald-400'
+                }`}
+              >
+                {student.status === 'ACTIVE' ? <XCircle className="w-4 h-4 mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                {student.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+              </Button>
+              <Link to={`/students/edit/${student._id || id}`}>
+                <Button className="rounded-2xl h-12 px-8 font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20">
+                  <Edit className="w-4 h-4 mr-2" />
+                  Modify Core
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -359,7 +367,7 @@ export const StudentProfileView = () => {
                             value={selectedTermId}
                             onChange={e => setSelectedTermId(e.target.value)}
                           >
-                            {examTerms.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+                            {examTerms.map((t, idx) => <option key={t.id || t._id || idx} value={t.id || t._id}>{t.name}</option>)}
                           </select>
                        </div>
                        
@@ -492,9 +500,11 @@ export const StudentProfileView = () => {
                                     <span className="text-sm mr-1">₹</span>8,400
                                 </span>
                             </div>
-                            <Button className="w-full bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-widest h-12">
-                                Request Immediate Settlement
-                            </Button>
+                             {isAdmin && (
+                               <Button className="w-full bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-widest h-12">
+                                   Request Immediate Settlement
+                               </Button>
+                             )}
                         </div>
                      </Card>
                   </div>

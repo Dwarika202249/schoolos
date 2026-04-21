@@ -163,7 +163,7 @@ export const FinanceDashboard = () => {
 
             <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                {transactions.map((tx) => (
-                 <div key={tx._id} className="flex items-center justify-between p-4 rounded-2xl border border-white/5 hover:bg-white/5 transition-colors">
+                 <div key={tx.id || tx._id} className="flex items-center justify-between p-4 rounded-2xl border border-white/5 hover:bg-white/5 transition-colors">
                     <div className="flex items-center gap-4">
                        <div className={`w-10 h-10 rounded-xl ${tx.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'} flex items-center justify-center`}>
                           {tx.type === 'INCOME' ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownRight className="w-5 h-5" />}

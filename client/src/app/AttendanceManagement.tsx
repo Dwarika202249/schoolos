@@ -14,9 +14,13 @@ import {
 } from 'lucide-react';
 import api from '../utils/api';
 import { Button } from '../components/ui/Button';
+import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 
 export const AttendanceManagement = () => {
+  const { user } = useAuth();
+  const isTeacher = user?.role === 'TEACHER';
+
   const [classes, setClasses] = useState<any[]>([]);
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,16 +42,30 @@ export const AttendanceManagement = () => {
           api.get('/tenant/classes'),
           api.get('/tenant/academic-years')
         ]);
-        setClasses(cRes.data.data);
+
+        let allClasses = cRes.data.data;
+
+        // ── Teacher Filter ──────────────────────────────────────────
+        // If the user is a TEACHER, show only their assigned class
+        // A class is theirs if classTeacherId === their staffProfileId
+        if (isTeacher && user?.staffProfileId) {
+          const myClasses = allClasses.filter(
+            (c: any) => (c.classTeacherId === user.staffProfileId)
+          );
+          allClasses = myClasses;
+        }
+        // ────────────────────────────────────────────────────────────
+
+        setClasses(allClasses);
         const years = yRes.data.data;
         setAcademicYears(years);
 
         const current = years.find((y: any) => y.isCurrent);
-        if (current) setActiveYearId(current._id);
+        if (current) setActiveYearId(current.id || current._id);
 
         // Auto-select first class if available
-        if (cRes.data.data.length > 0) {
-          const first = cRes.data.data[0];
+        if (allClasses.length > 0) {
+          const first = allClasses[0];
           setSelectedClass(first.id || first._id);
         }
       } catch (error) {
@@ -57,7 +75,7 @@ export const AttendanceManagement = () => {
       }
     };
     init();
-  }, []);
+  }, [isTeacher, user?.staffProfileId]);
 
   // Fetch Attendance Sheet
   const fetchSheet = useCallback(async () => {
@@ -155,6 +173,21 @@ export const AttendanceManagement = () => {
   };
 
   if (loading) return null;
+
+  // Teacher has no assigned class — show friendly empty state
+  if (isTeacher && classes.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4 animate-in fade-in duration-700">
+        <div className="w-20 h-20 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
+          <CalendarDays className="w-10 h-10 text-amber-500" />
+        </div>
+        <h2 className="text-2xl font-black text-foreground">No Class Assigned</h2>
+        <p className="text-slate-400 font-medium max-w-sm">
+          You haven't been assigned as a Class Teacher yet. Please contact your school administrator to configure your class assignment.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700">

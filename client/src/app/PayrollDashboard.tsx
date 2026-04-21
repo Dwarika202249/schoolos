@@ -168,7 +168,7 @@ export const PayrollDashboard = () => {
           {staffList.map((staff) => {
             const payroll = getPayrollForStaff(staff._id);
             return (
-              <div key={staff._id} className="p-6 hover:bg-white/5 transition-all group flex items-center justify-between">
+              <div key={staff.id || staff._id} className="p-6 hover:bg-white/5 transition-all group flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-white/5 overflow-hidden border border-white/5 flex items-center justify-center text-slate-500 font-black uppercase">
                     {staff.userId?.firstName?.slice(0, 1)}{staff.userId?.lastName?.slice(0, 1)}

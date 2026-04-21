@@ -43,6 +43,9 @@ router.delete('/subjects/:id', requireOwner, SubjectController.delete);
 router.get('/school', requireAdmin, TenantController.getSchool);
 router.patch('/school', requireOwner, TenantController.updateSchool);
 
+// ─── Dashboard Stats Route ────────────────────────────────────────────────────
+router.get('/dashboard/stats', requireAnyStaff, TenantController.getDashboardStats);
+
 // ─── Staff Routes ─────────────────────────────────────────────────────────────
 router.post('/staff', requireAdmin, StaffController.createStaff);
 router.get('/staff', requireAdmin, StaffController.getStaffList);

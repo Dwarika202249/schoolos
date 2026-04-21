@@ -134,7 +134,7 @@ export const InvoicesPage = () => {
             </thead>
             <tbody className="divide-y divide-white/5">
                {filteredInvoices.map((inv) => (
-                 <tr key={inv._id} className="group hover:bg-white/5 transition-colors">
+                 <tr key={inv.id || inv._id} className="group hover:bg-white/5 transition-colors">
                     <td className="px-8 py-6">
                        <p className="font-bold">{inv.studentId?.userId?.firstName} {inv.studentId?.userId?.lastName}</p>
                        <p className="text-[10px] font-bold text-slate-500 uppercase">{inv.studentId?.admissionNumber}</p>

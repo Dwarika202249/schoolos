@@ -97,7 +97,7 @@ export class FinanceController {
       const query = withTenantScope(req);
       const structures = await FeeStructure.find(query)
         .populate("categoryId", "name")
-        .populate("classId", "name");
+        .populate("classId", "displayName");
       return ApiResponse.success(res, structures);
     } catch (error) {
       next(error);

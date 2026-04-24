@@ -178,7 +178,7 @@ export class ExamController {
         .sort({ examDate: 1 });
 
       // Add canMark flag for Teachers
-      let finalSchedules = schedulesData.map(s => s.toObject());
+      let finalSchedules: any[] = schedulesData.map(s => s.toObject());
 
       if (req.jwtPayload?.role === 'TEACHER') {
           const teacherId = req.jwtPayload.userId as string;
